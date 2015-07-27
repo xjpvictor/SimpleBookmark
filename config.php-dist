@@ -14,6 +14,6 @@ $mail_cert = '1'; // 0 if use self-signed certificates
 $mail_ssl = '1'; // use ssl
 $mail_tls = '0'; // 1: force tls, -1: force notls, 0: default
 $allowed_mail = array(
-  'ke@xjpvictor.info', // must set if allow adding bookmarks via email
+  '', // must set if allow adding bookmarks via email
 );
 ?>

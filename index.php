@@ -227,7 +227,7 @@ for (i = 0;i < moves.length;i++) {
 if (file_exists($f = $data_dir . 'foot.php'))
   include($f);
 ?>
-<p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by SimpleBookmark.</p>
+<p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>
 </body>
 </html>
