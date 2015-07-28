@@ -116,7 +116,6 @@ function parseparts($conn, $msgno, $body, $attachment, $inline, $content, $secti
 }
 
 if (!function_exists('imap_open')) {
-  http_response_code(403);
   exit('IMAP extension not installed');
 }
 
@@ -124,7 +123,6 @@ $parsemail = true;
 include(__DIR__ . '/init.php');
 
 if (!$mail_box || !$mail_pwd || !$mail_server || empty($allowed_mail)) {
-  http_response_code(403);
   exit('Mail box not setup');
 }
 

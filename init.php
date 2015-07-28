@@ -31,6 +31,5 @@ if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
 
 if (!isset($parsemail) && $auth === false) {
   session_destroy();
-  http_response_code(403);
 }
 ?>
