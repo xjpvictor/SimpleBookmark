@@ -11,6 +11,8 @@ This is a simple web-based bookmark manager written in PHP
 
 * Drag and Drop to organize bookmarks
 
+* Search for bookmarks
+
 * Bookmarklet for adding/showing bookmarks
 
 * Email links to save to bookmarks

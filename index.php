@@ -73,13 +73,13 @@ body,#main{padding:0;margin:0;}
 a.edit,a.delete{margin-left:5px;font-weight:normal;}
 a.edit{color:#666;}
 a.delete{color:red;}
-a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:0 0 0 5px;color:#666;text-decoration:none;background-color:#eee;border-radius:3px;border:none;font-size:0.9em;cursor:move;font-weight:normal;display:inline-block;}
+a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:10px 0 0 10px;color:#666;text-decoration:none;background-color:#eee;border-radius:3px;border:none;font-size:0.9em;cursor:move;font-weight:normal;display:inline-block;}
 #addform-more a.bookmarklet{margin-left:0;margin-bottom:10px;}
-#addform form #addform-url-title input[type="text"]{width:30%;}
+#addform form #addform-url-title input[type="text"]{width:40%;}
 .folder{border-bottom:1px solid #444;margin-top:1em;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
-.url .border{padding-left:8px;border-left:3px solid #666;}
+.url .border{padding-left:8px;border-left:3px solid #666;display:block;}
 .target{position:relative;z-index:5;display:block;}
 .url .target{margin-left:3px;}
 .folder>.target{margin-top:-23px;margin-bottom:-1px;height:23px;}
@@ -89,18 +89,23 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:0
 .move:hover{cursor:move;}
 .editform{display:none;margin:20px 10px 20px;}
 .folder>.editform{margin-top:16px;}
-.folder>.editfolder{margin-top:0;}
+.folder>.editfolder{margin-top:20px;}
 .editform input[type="text"]{width:50%;margin:0 0 10px;padding:2px 4px;}
 .editform input[type="submit"]{margin:0 5px 0 0;padding:4px 5px 5px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
+.hide{display:none !important;}
 #foot{padding:0 10px 20px;}
 #foot p{color:#666;}
 #foot a{color:#666;}
 #foot a:hover{color:#ca2017;}
 .move.drag{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
 .target.drag{padding-top:23px;}
+#search-noresult{font-weight:bold;}
 @media screen and (max-width:800px){
 #addform form input[type="text"]{width:80%;}
+#addform form #addform-url-title input[type="text"]{width:60%;}
+.editform input[type="text"]{width:80%;}
+#search{margin-bottom:6px;}
 #advance{margin-top:8px;}
 #content{padding-top:90px;}
 .entry:before{margin-top:-105px;height:105px;}
@@ -130,7 +135,7 @@ if (!$auth) {
   echo '<div id="addform">'."\n";
   echo '<p id="logout"><a href="index.php?action=logout">Log out</a></p>';
   echo '<form action="index.php?action=add" method="post">'."\n";
-  echo '<input type="text" required name="u">'."\n";
+  echo '<input type="text" required name="u" id="search" onkeydown="getStr(event);" onkeyup="searchStr(event);">'."\n";
   echo '<input type="submit" value="Add">'."\n";
   echo '<p id="advance"><a href="javascript:;" onclick="toggleShow(\'addform-more\');">Advance</a></p>'."\n";
   echo '<div id="addform-more" style="display:none;">'."\n";
@@ -146,17 +151,17 @@ if (!$auth) {
 <a class="sort-date" href="index.php?action=sort&id=_0&sort=date_added&recursive=1">Date</a> or
 <a class="sort-reverse" href="index.php?action=sort&id=_0&sort=0&recursive=0">Reverse order</a>
 </p>'."\n";
-  echo '<p><a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d=_\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0)" title="Drag to add bookmarklet">Save bookmark to '.htmlentities($site_name).'</a>&nbsp;&nbsp;';
-  echo '<a class="bookmarklet" href="javascript:if(document.getElementById(\'spbkmk\')){document.getElementById(\'spbkmk\').parentNode.removeChild(document.getElementById(\'spbkmk\'));}var bml=document.createElement(\'div\');bml.id=\'spbkmk\';bml.style.position=\'fixed\';bml.style.zIndex=9999;bml.style.top=0;bml.style.left=0;bml.style.right=0;bml.style.backgroundColor=\'#fff\';bml.style.minHeight=\'28px\';bml.style.maxHeight=\'56px\';bml.style.overflow=\'hidden\';bml.style.borderBottomWidth=\'1px\';bml.style.borderBottomStyle=\'solid\';bml.style.borderBottomColor=\'#666\';document.body.appendChild(bml);var script=document.createElement(\'script\');script.src=\''.$site_url.'bookmarkbar.php\';bml.appendChild(script);" title="Drag to add bookmarklet">Open bookmarks in '.htmlentities($site_name).'</a></p>';
+  echo '<p><a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d=_\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0)" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Save bookmark to '.htmlentities($site_name).'</a>&nbsp;&nbsp;';
+  echo '<a class="bookmarklet" href="javascript:if(document.getElementById(\'spbkmk\')){document.getElementById(\'spbkmk\').parentNode.removeChild(document.getElementById(\'spbkmk\'));}var bml=document.createElement(\'div\');bml.id=\'spbkmk\';bml.style.position=\'fixed\';bml.style.zIndex=9999;bml.style.top=0;bml.style.left=0;bml.style.right=0;bml.style.backgroundColor=\'#fff\';bml.style.minHeight=\'28px\';bml.style.maxHeight=\'56px\';bml.style.overflow=\'hidden\';bml.style.borderBottomWidth=\'1px\';bml.style.borderBottomStyle=\'solid\';bml.style.borderBottomColor=\'#666\';document.body.appendChild(bml);var script=document.createElement(\'script\');script.src=\''.$site_url.'bookmarkbar.php\';bml.appendChild(script);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open bookmarks in '.htmlentities($site_name).'</a></p>';
   echo '<p><a href="index.php?action=export">Export Bookmarks</a></p>';
   echo '</div>'."\n";
   echo '</form>'."\n";
   echo '</div>'."\n";
 
   // Show bookmarks
-  echo '<div id="content">'."\n";
+  echo '<div id="content"><div id="folder-wrap">'."\n";
   echo $output['url'];
-  echo '</div>'."\n";
+  echo '</div></div>'."\n";
 }
 ?>
 
@@ -217,11 +222,66 @@ for (i = 0;i < targets.length;i++) {
   target.addEventListener('drop', handleDrop, false);
 };
 var moves=document.getElementsByClassName('move');
-for (i = 0;i < moves.length;i++) {
+for (i=0;i<moves.length;i++) {
   var move=moves[i];
   move.addEventListener('dragstart', handleDragStart, false);
   move.addEventListener('dragend', handleDragEnd, false);
 };
+function getStr(event) {
+  if (event.keyCode === 27) {
+    document.getElementById('search').blur();
+  } else if (event.keyCode === 13) {
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    return false;
+  }
+}
+var timeout=null;
+function searchStr(event) {
+  clearTimeout(timeout);
+  timeout=setTimeout(function() {
+    var searchtext=document.getElementById('search').value.toLowerCase();
+    var links=document.getElementsByClassName('search');
+    for(i=0;i<links.length;i++) {
+      var link=links[i];
+      var id=link.id;
+      var elem=document.getElementById('entry-' + id);
+      var form=document.getElementById('editform-' + id);
+      elem.style.display='block';
+      form.style.display='none';
+      var href=link.getAttribute('href').toLowerCase();
+      var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
+      if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
+        elem.classList.add('hide');
+        var l=id;
+        while ((l=l.substring(0, l.lastIndexOf('_')))) {
+          document.getElementById('entry-' + l).style.display='block';
+          document.getElementById('editform-' + l).style.display='none';
+          if (document.getElementById('folder-wrap-' + l).offsetHeight == 0) {
+            document.getElementById(l).classList.add('hide');
+          }
+        }
+      } else {
+        elem.classList.remove('hide');
+        var l=id;
+        while ((l=l.substring(0, l.lastIndexOf('_')))) {
+          document.getElementById('entry-' + l).style.display='block';
+          document.getElementById('editform-' + l).style.display='none';
+          document.getElementById(l).classList.remove('hide');
+        }
+      }
+    }
+    if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
+      document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
+    } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
+      elemns.parentNode.removeChild(elemns);
+    }
+  }, 100);
+}
 </script>
 <?php
 if (file_exists($f = $data_dir . 'foot.php'))
