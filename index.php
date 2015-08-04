@@ -94,8 +94,9 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 .editform input[type="submit"]{margin:0 5px 0 0;padding:4px 5px 5px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
-#rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:36px;background-color:#000;height:76px;border-width:1px;border-style:solid;border-color:#000;color:#fff;padding:0;margin:0;}
-#totop,#tobottom{width:38px;height:38px;font-size:30px;line-height:38px;color:#fff;text-align:center;padding:0;margin:0;display:inline-block;}
+#rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:#000;height:60px;color:#fff;padding:0;margin:0;}
+#totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#888;text-align:center;padding:0;margin:0;display:inline-block;}
+#totop:hover,#tobottom:hover{color:#bbb;}
 #foot{padding:0 10px 20px;}
 #foot p{color:#666;}
 #foot a{color:#666;}
