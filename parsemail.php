@@ -164,6 +164,8 @@ if ($mails) {
             }
           }
         }
+        if (preg_match('/<a (?:[^>]*\s)*href\s*=\s*(?:"|\')([^"\']*)(?:"|\')[^>]*>([^<]+)<\/a>/i', $body, $matches))
+          $body = $matches[1];
         $entry = add_bookmark($body, $folder, 'url', $bookmark_json);
       }
     }
