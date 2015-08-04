@@ -95,7 +95,7 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
 #rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:#000;height:60px;color:#fff;padding:0;margin:0;}
-#totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#888;text-align:center;padding:0;margin:0;display:inline-block;}
+#totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#bbb;text-align:center;padding:0;margin:0;display:inline-block;}
 #totop:hover,#tobottom:hover{color:#bbb;}
 #foot{padding:0 10px 20px;}
 #foot p{color:#666;}
@@ -130,6 +130,15 @@ if (!$auth) {
 </form>
 </div><br/>';
 } else {
+  $cache_file = $cache_dir.'index.html';
+  if (file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
+    echo (file_get_contents($cache_file));
+    exit;
+  }
+
+  $cache = true;
+  ob_start();
+
   // Parse bookmark json
   $bookmarks = parse_bookmark_json($bookmark_json);
   $output = output_bookmarks($bookmarks[0]['entries']);
@@ -295,3 +304,13 @@ if (file_exists($f = $data_dir . 'foot.php'))
 </div>
 </body>
 </html>
+
+<?php
+if (isset($cache) && $cache) {
+  $output = ob_get_contents();
+  ob_clean();
+  file_put_contents($cache_file, $output);
+  echo $output;
+  ob_end_flush();
+}
+?>

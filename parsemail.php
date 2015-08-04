@@ -126,12 +126,17 @@ if (!$mail_box || !$mail_pwd || !$mail_server || empty($allowed_mail)) {
   exit('Mail box not setup');
 }
 
+ob_end_clean();
+ob_start();
 header('HTTP/1.1 200 Ok');
 header("Cache-Control: no-cache, must-revalidate");
 header("Pragma: no-cache");
 header('Expires: '.gmdate('D, d M Y H:i:s', time()).' GMT');
-header("Content-Length: 0");
+$size=ob_get_length();
+header("Content-Length: $size");
 header("Connection: close");
+ob_end_flush();
+flush();
 if (function_exists('fastcgi_finish_request'))
   fastcgi_finish_request();
 if (session_id())

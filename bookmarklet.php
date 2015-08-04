@@ -79,6 +79,15 @@ function spbclose(){window.top.postMessage(\'spb_close\', \''.urldecode($_GET['h
     echo '<form method="post" action="'.$url.'">';
     echo '<input required name="p" type="password" autofocus><input type="submit" value="Log in">';
   } else {
+    $cache_file = $cache_dir.'bookmarklet.html';
+    if (file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
+      echo (file_get_contents($cache_file));
+      exit;
+    }
+
+    $cache = true;
+    ob_start();
+
     $bookmarks = parse_bookmark_json($bookmark_json);
     $output = output_bookmarks($bookmarks[0]['entries']);
     echo '<form method="post" action="'.$url.'">';
@@ -94,3 +103,13 @@ function spbclose(){window.top.postMessage(\'spb_close\', \''.urldecode($_GET['h
 </div>
 </body>
 </html>
+
+<?php
+if (isset($cache) && $cache) {
+  $output = ob_get_contents();
+  ob_clean();
+  file_put_contents($cache_file, $output);
+  echo $output;
+  ob_end_flush();
+}
+?>
