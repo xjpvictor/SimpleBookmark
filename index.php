@@ -94,6 +94,8 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 .editform input[type="submit"]{margin:0 5px 0 0;padding:4px 5px 5px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
+#rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:36px;background-color:#000;height:76px;border-width:1px;border-style:solid;border-color:#000;color:#fff;padding:0;margin:0;}
+#totop,#tobottom{width:38px;height:38px;font-size:30px;line-height:38px;color:#fff;text-align:center;padding:0;margin:0;display:inline-block;}
 #foot{padding:0 10px 20px;}
 #foot p{color:#666;}
 #foot a{color:#666;}
@@ -152,7 +154,7 @@ if (!$auth) {
 <a class="sort-reverse" href="index.php?action=sort&id=_0&sort=0&recursive=0">Reverse order</a>
 </p>'."\n";
   echo '<p><a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d=_\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0)" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Save bookmark to '.htmlentities($site_name).'</a>&nbsp;&nbsp;';
-  echo '<a class="bookmarklet" href="javascript:if(document.getElementById(\'spbkmk\')){document.getElementById(\'spbkmk\').parentNode.removeChild(document.getElementById(\'spbkmk\'));}var bml=document.createElement(\'div\');bml.id=\'spbkmk\';bml.style.position=\'fixed\';bml.style.zIndex=9999;bml.style.top=0;bml.style.left=0;bml.style.right=0;bml.style.backgroundColor=\'#fff\';bml.style.minHeight=\'28px\';bml.style.maxHeight=\'56px\';bml.style.overflow=\'hidden\';bml.style.borderBottomWidth=\'1px\';bml.style.borderBottomStyle=\'solid\';bml.style.borderBottomColor=\'#666\';document.body.appendChild(bml);var script=document.createElement(\'script\');script.src=\''.$site_url.'bookmarkbar.php\';bml.appendChild(script);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open bookmarks in '.htmlentities($site_name).'</a></p>';
+  echo '<a class="bookmarklet" href="javascript:if(document.getElementById(\'spbkmk\')){document.getElementById(\'spbkmk\').parentNode.removeChild(document.getElementById(\'spbkmk\'));}var bml=document.createElement(\'div\');bml.id=\'spbkmk\';bml.style.position=\'fixed\';bml.style.zIndex=9999;bml.style.top=0;bml.style.left=0;bml.style.right=0;bml.style.textAlign=\'left\';bml.style.backgroundColor=\'#fff\';bml.style.minHeight=\'28px\';bml.style.maxHeight=\'56px\';bml.style.overflow=\'hidden\';bml.style.borderBottomWidth=\'1px\';bml.style.borderBottomStyle=\'solid\';bml.style.borderBottomColor=\'#666\';document.body.appendChild(bml);var script=document.createElement(\'script\');script.src=\''.$site_url.'bookmarkbar.php\';bml.appendChild(script);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open bookmarks in '.htmlentities($site_name).'</a></p>';
   echo '<p><a href="index.php?action=export">Export Bookmarks</a></p>';
   echo '</div>'."\n";
   echo '</form>'."\n";
@@ -166,6 +168,7 @@ if (!$auth) {
 ?>
 
 <?php // Foot ?>
+<div id="rightbottom"><a href="javascript:;" onclick="window.scrollTo(0,0);return false;" id="totop" title="Go to top">&#x25B2</a><a href="javascript:;" onclick="window.scrollTo(0, document.body.scrollHeight);return false;" id="tobottom" title="Go to bottom">&#x25BC</a></div>
 </div> <!-- End of main -->
 <div id="foot">
 <script>
