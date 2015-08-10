@@ -20,15 +20,14 @@ $cost = 12; //Need to reset password if change this
 if ($password && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $password))
   file_put_contents($config_file, str_replace('$password = \''.$password.'\'', '$password = \''.($password = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost])).'\'', file_get_contents($config_file)), LOCK_EX);
 
-$auth = auth($_SERVER['REMOTE_ADDR']);
-
 // Authentication
 if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
+  auth($_SERVER['REMOTE_ADDR'], (isset($_POST['r']) && $_POST['r'] ? 31536000 : 0));
   $auth = true;
   session_regenerate_id(true);
-  $_SESSION['time'] = time();
   $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
-}
+} else
+  $auth = auth($_SERVER['REMOTE_ADDR']);
 
 if (!isset($parsemail) && $auth === false) {
   session_destroy();

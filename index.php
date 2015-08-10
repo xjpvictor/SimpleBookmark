@@ -123,10 +123,11 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 if (!$auth) {
   // Show login
   echo '<div id="wrap">
-<p>Please log in</p>
+<p>Please log in</p><br/>
 <form method="post" action="index.php">
 <input required name="p" type="password" autofocus>
 <input class="compose" type="submit" value="Log in" >
+<br/><br/><label><input name="r" type="checkbox" value="1"> Remember me</label>
 </form>
 </div><br/>';
 } else {

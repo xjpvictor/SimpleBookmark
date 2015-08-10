@@ -10,20 +10,15 @@ function toutf8($str) {
     return '';
 }
 
-function auth($ip) {
-  $expire = 31536000;
-  session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
-  session_name('_xjpvictor_bookmark_');
+function auth($ip, $expire = null) {
+  if (isset($expire))
+    session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
+  session_name('_spbkmk_bookmark_');
   if (session_status() !== PHP_SESSION_ACTIVE)
     session_start();
-  if (!isset($_SESSION['time']) || !isset($_SESSION['ip']))
-    return false;
-  elseif (time() - $_SESSION['time'] >= $expire)
-    return false;
-  elseif ($_SESSION['ip'] !== $ip)
+  if (!isset($_SESSION['ip']) || $_SESSION['ip'] !== $ip)
     return false;
 
-  $_SESSION['time'] = time();
   $_SESSION['ip'] = $ip;
   return true;
 }
