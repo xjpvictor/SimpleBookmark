@@ -19,11 +19,14 @@ if (!document.getElementById("spb_iframe") && window.location.origin) {
   iframe.style.border = "none";
   document.body.appendChild(iframe);
 
-  window.addEventListener("message", function(e) {
+  function closeFrame(e) {
     if (e.data == "spb_close") {
       document.body.removeChild(document.getElementById("spb_iframe"));
+      window.removeEventListener("message", closeFrame);
     }
-  });
+  }
+
+  window.addEventListener("message", closeFrame);
 }';
   exit;
 }
