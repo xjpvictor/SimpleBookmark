@@ -29,7 +29,4 @@ if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
 } else
   $auth = auth($_SERVER['REMOTE_ADDR']);
 
-if (!isset($parsemail) && $auth === false) {
-  session_destroy();
-}
 ?>
