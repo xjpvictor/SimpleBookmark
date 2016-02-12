@@ -11,12 +11,12 @@ if (!document.getElementById("spb_iframe") && window.location.origin) {
   iframe.height = "50px";
   iframe.id = "spb_iframe";
   iframe.src = x.src + "&u=" + encodeURIComponent(document.location.href) + "&n=" + encodeURIComponent(document.title) + "&href=" + encodeURIComponent(window.location.origin);
-  iframe.style.position = "fixed";
-  iframe.style.left = "50%";
-  iframe.style.top = "10px";
-  iframe.style.marginLeft = "-150px";
-  iframe.style.zIndex = 100000;
-  iframe.style.border = "none";
+  iframe.style.setProperty("position", "fixed", "important");
+  iframe.style.setProperty("left", "50%", "important");
+  iframe.style.setProperty("top", "10px", "important");
+  iframe.style.setProperty("margin-left", "-150px", "important");
+  iframe.style.setProperty("z-index", 100000, "important");
+  iframe.style.setProperty("border", "none", "important");
   document.body.appendChild(iframe);
 
   function closeFrame(e) {
@@ -41,18 +41,18 @@ include(__DIR__ . '/init.php');
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <style type="text/css" media="all">
-html, body, div, span, h1, p, a, input, textarea{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:1.8em;}
-html,body{background:transparent;}
-body{padding:0;margin:0;}
-#wrap{background-color:#000;border:1px solid red;border-radius:3px;margin:6px 6px 0 0;}
-#wrap form{text-align:center;}
-#wrap input[type="password"]{width:195px;height:20px;margin:4px 5px 4px 0;}
-#wrap select{width:140px;font-size:14px;padding:3px 0;}
-#wrap input[type="submit"]{width:70px;font-size:14px;}
-#wrap input[type="submit"]:hover{cursor:pointer;}
-#wrap p{color:#fff;font-size:16px;text-align:center;margin:4px 0;}
-#cancel{position:absolute;top:0px;right:0px;background:white;color:black;font-size:13px;font-weight:bold;text-align:center;line-height:1em;margin:0;padding:0;width:13px;height:13px;border-radius:13px;border:2px solid #000;}
-#cancel:hover{cursor:pointer;}
+html, body, div, span, h1, p, a, input, textarea{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px !important;line-height:1.8em !important;}
+html,body{background:transparent !important;}
+body{padding:0 !important;margin:0 !important;}
+#wrap{background-color:#000 !important;border:1px solid red !important;border-radius:3px !important;margin:6px 6px 0 0 !important;}
+#wrap form{text-align:center !important;}
+#wrap input[type="password"]{width:195px !important;height:20px !important;margin:4px 5px 4px 0 !important;}
+#wrap select{width:140px !important;font-size:14px !important;padding:3px 0 !important;}
+#wrap input[type="submit"]{width:70px !important;font-size:14px !important;}
+#wrap input[type="submit"]:hover{cursor:pointer !important;}
+#wrap p{color:#fff !important;font-size:16px !important;text-align:center !important;margin:4px 0 !important;}
+#cancel{position:absolute !important;top:0px !important;right:0px !important;background:white !important;color:black !important;font-size:13px !important;font-weight:bold !important;text-align:center !important;line-height:1em !important;margin:0 !important;padding:0 !important;width:13px !important;height:13px !important;border-radius:13px !important;border:2px solid #000 !important;}
+#cancel:hover{cursor:pointer !important;}
 </style>
 </head>
 <body>
