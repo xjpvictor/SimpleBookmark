@@ -15,7 +15,7 @@ if (!document.getElementById("spb_iframe") && window.location.origin) {
   iframe.style.setProperty("left", "50%", "important");
   iframe.style.setProperty("top", "10px", "important");
   iframe.style.setProperty("margin-left", "-150px", "important");
-  iframe.style.setProperty("z-index", 100000, "important");
+  iframe.style.setProperty("z-index", 2147483647, "important");
   iframe.style.setProperty("border", "none", "important");
   document.body.appendChild(iframe);
 
