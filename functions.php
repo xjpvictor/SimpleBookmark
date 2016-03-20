@@ -113,7 +113,12 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null) {
         $new = array('_'.$level => array('entries' => $new));
     }
   }
-  $bookmark[0]['entries'] = array_merge_recursive($bookmark[0]['entries'], $new);
+
+  if (isset($bookmark[0]['entries']) && is_array($bookmark[0]['entries']))
+    $bookmark[0]['entries'] = array_merge_recursive($bookmark[0]['entries'], $new);
+  else
+    $bookmark[0]['entries'] = $new;
+
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
   if ($type == 'folder')
     move_bookmark($data, ($folder !== '_0' ? $folder : '').'_-1', $bookmark_json);
