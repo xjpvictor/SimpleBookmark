@@ -14,6 +14,7 @@ function auth($ip, $expire = null) {
   if (isset($expire))
     session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
   session_name('_spbkmk_bookmark_');
+  session_save_path(__DIR__ . '/session');
   if (session_status() !== PHP_SESSION_ACTIVE)
     session_start();
   if (!isset($_SESSION['ip']) || $_SESSION['ip'] !== $ip)
