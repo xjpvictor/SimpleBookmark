@@ -1,5 +1,6 @@
 .*
 /data/*
 /cache/*
+/session/*
 !.gitkeep
 !.gitignore
