@@ -183,6 +183,15 @@ if (!$auth) {
 </div> <!-- End of main -->
 <div id="foot">
 <script>
+function notRobot() {
+  document.cookie = "_spbkmk_bookmark_notRobot=1;path=/";
+  window.removeEventListener("scroll", notRobot);
+  window.removeEventListener("mousemove", notRobot);
+  window.removeEventListener("keypress", notRobot);
+}
+window.addEventListener("scroll", notRobot);
+window.addEventListener("mousemove", notRobot);
+window.addEventListener("keypress", notRobot);
 function toggleShow(id) {
   var bb = document.getElementById(id);
   if (bb.style.display == "block") {
