@@ -22,11 +22,11 @@ if ($password && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($
 
 // Authentication
 if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
-  auth($_SERVER['REMOTE_ADDR'], (isset($_POST['r']) && $_POST['r'] ? 31536000 : 0));
+  auth((isset($_POST['r']) && $_POST['r'] ? 31536000 : 0));
   $auth = true;
   session_regenerate_id(true);
-  $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
+  $_SESSION['auth'] = 1;
 } else
-  $auth = auth($_SERVER['REMOTE_ADDR']);
+  $auth = auth();
 
 ?>

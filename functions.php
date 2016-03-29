@@ -10,7 +10,7 @@ function toutf8($str) {
     return '';
 }
 
-function auth($ip, $expire = null) {
+function auth($expire = null) {
   if (isset($expire))
     session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
   session_name('_spbkmk_bookmark_');
@@ -27,11 +27,10 @@ function auth($ip, $expire = null) {
     }
   }
 
-  if (!isset($_SESSION['ip']) || $_SESSION['ip'] !== $ip)
+  if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== 1)
     return false;
-
-  $_SESSION['ip'] = $ip;
-  return true;
+  else
+    return true;
 }
 
 function parse_bookmark_json($bookmark_json) {
