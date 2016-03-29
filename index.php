@@ -179,7 +179,9 @@ if (!$auth) {
 ?>
 
 <?php // Foot ?>
+<?php if ($auth) { ?>
 <div id="rightbottom"><a href="javascript:;" onclick="window.scrollTo(0,0);return false;" id="totop" title="Go to top">&#x25B2</a><a href="javascript:;" onclick="window.scrollTo(0, document.body.scrollHeight);return false;" id="tobottom" title="Go to bottom">&#x25BC</a></div>
+<?php } ?>
 </div> <!-- End of main -->
 <div id="foot">
 <script>
