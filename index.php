@@ -124,7 +124,7 @@ if (!$auth) {
   // Show login
   echo '<div id="wrap">
 <p>Please log in</p><br/>
-<form method="post" action="index.php">
+<form method="post" action="index.php?action=login">
 <input required name="p" type="password" autofocus>
 <input class="compose" type="submit" value="Log in" >
 <br/><br/><label><input name="r" type="checkbox" value="1"> Remember me</label>

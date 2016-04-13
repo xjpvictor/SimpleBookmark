@@ -26,6 +26,10 @@ if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
   $auth = true;
   session_regenerate_id(true);
   $_SESSION['auth'] = 1;
+  if (isset($_GET['action']) && $_GET['action'] == 'login') {
+    header('Location: index.php');
+    exit;
+  }
 } else
   $auth = auth();
 
