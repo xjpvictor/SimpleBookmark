@@ -20,7 +20,7 @@ $cost = 12; //Need to reset password if change this
 if ($password && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $password))
   file_put_contents($config_file, str_replace('$password = \''.$password.'\'', '$password = \''.($password = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost])).'\'', file_get_contents($config_file)), LOCK_EX);
 
-if ($passcode && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $passcode))
+if (isset($passcode) && $passcode && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $passcode))
   file_put_contents($config_file, str_replace('$passcode = \''.$passcode.'\'', '$passcode = \''.($passcode = password_hash($passcode, PASSWORD_BCRYPT, ['cost' => $cost])).'\'', file_get_contents($config_file)), LOCK_EX);
 
 // Authentication

@@ -17,5 +17,5 @@ $allowed_mail = array(
   '', // must set if allow adding bookmarks via email
 );
 
-$passcode = '';
+$passcode = ''; // leave empty to disable lock screen
 ?>

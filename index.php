@@ -198,7 +198,10 @@ function getCookie(name) {
   else return '';
 }
 function setLockCookie() {
-  document.cookie = "_spbkmk_bookmark_lock="+Date.now()+";expires=Fri, 31 Dec 9999 23:59:59 GMT;path=/";
+  n = Date.now();
+  d = new Date();
+  d.setTime(n+31536000000);
+  document.cookie = "_spbkmk_bookmark_lock="+n+";expires="+d.toGMTString()+";path=/";
 }
 function lockDown() {
   t = getCookie('_spbkmk_bookmark_lock');
