@@ -16,4 +16,6 @@ $mail_tls = '0'; // 1: force tls, -1: force notls, 0: default
 $allowed_mail = array(
   '', // must set if allow adding bookmarks via email
 );
+
+$passcode = '';
 ?>

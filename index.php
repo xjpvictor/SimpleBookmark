@@ -104,6 +104,7 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .move.drag{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
 .target.drag{padding-top:23px;}
 #search-noresult{font-weight:bold;}
+#lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
 @media screen and (max-width:800px){
 #addform form input[type="text"]{width:80%;}
 #addform form #addform-url-title input[type="text"]{width:60%;}
@@ -133,7 +134,7 @@ if (!$auth) {
 } else {
   $cache_file = $cache_dir.'index.html';
   if (file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
-    echo (file_get_contents($cache_file));
+    echo str_replace(array('##LOCKDOWN##'), array((isset($passcode) && $passcode !== '' ? 1 : 0)), file_get_contents($cache_file));
     exit;
   }
 
@@ -183,8 +184,41 @@ if (!$auth) {
 <div id="rightbottom"><a href="javascript:;" onclick="window.scrollTo(0,0);return false;" id="totop" title="Go to top">&#x25B2</a><a href="javascript:;" onclick="window.scrollTo(0, document.body.scrollHeight);return false;" id="tobottom" title="Go to bottom">&#x25BC</a></div>
 <?php } ?>
 </div> <!-- End of main -->
+<div id="lock" style="display:none;">
+<p>Enter Pass code:</p>
+<input id="passcode" type="password">
+<input type="submit" value="Unlock" onclick="var elem=document.getElementById('passcode');var script=document.createElement('script');script.id='lock_s';script.src='passcode.php?p='+elem.value;document.body.appendChild(script);elem.value='';">
+</div>
 <div id="foot">
 <script>
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
+  else return '';
+}
+function setLockCookie() {
+  document.cookie = "_spbkmk_bookmark_lock="+Date.now()+";expires=Fri, 31 Dec 9999 23:59:59 GMT;path=/";
+}
+function lockDown() {
+  t = getCookie('_spbkmk_bookmark_lock');
+  if (t && Date.now() - t >= 600000) {
+    document.getElementById('lock').style.display='block';
+    window.removeEventListener("scroll", setLockCookie);
+    window.removeEventListener("mousemove", setLockCookie);
+    window.removeEventListener("keypress", setLockCookie);
+    document.title = 'Locked | <?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
+  } else
+    setTimeout("lockDown()", 60000);
+}
+if (##LOCKDOWN##) {
+  lockDown();
+  setTimeout(function() {
+    window.addEventListener("scroll", setLockCookie);
+    window.addEventListener("mousemove", setLockCookie);
+    window.addEventListener("keypress", setLockCookie);
+  }, 10000);
+}
 function notRobot() {
   document.cookie = "_spbkmk_bookmark_notRobot=1;path=/";
   window.removeEventListener("scroll", notRobot);
@@ -322,7 +356,9 @@ if (isset($cache) && $cache) {
   $output = ob_get_contents();
   ob_clean();
   file_put_contents($cache_file, $output);
-  echo $output;
+  echo str_replace(array('##LOCKDOWN##'), array((isset($passcode) && $passcode !== '' ? 1 : 0)), $output);
+  if (isset($_SESSION['lock']))
+    unset($_SESSION['lock']);
   ob_end_flush();
 }
 ?>

@@ -20,6 +20,9 @@ $cost = 12; //Need to reset password if change this
 if ($password && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $password))
   file_put_contents($config_file, str_replace('$password = \''.$password.'\'', '$password = \''.($password = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost])).'\'', file_get_contents($config_file)), LOCK_EX);
 
+if ($passcode && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $passcode))
+  file_put_contents($config_file, str_replace('$passcode = \''.$passcode.'\'', '$passcode = \''.($passcode = password_hash($passcode, PASSWORD_BCRYPT, ['cost' => $cost])).'\'', file_get_contents($config_file)), LOCK_EX);
+
 // Authentication
 if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
   auth((isset($_POST['r']) && $_POST['r'] ? 31536000 : 0));
@@ -27,6 +30,7 @@ if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
   session_regenerate_id(true);
   $_SESSION['auth'] = 1;
   if (isset($_GET['action']) && $_GET['action'] == 'login') {
+    setcookie('_spbkmk_bookmark_lock', microtime(), 31536000, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
     header('Location: index.php');
     exit;
   }
