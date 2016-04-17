@@ -209,28 +209,32 @@ function lockDown() {
     document.getElementById('lock').style.display='block';
     window.removeEventListener("scroll", setLockCookie);
     window.removeEventListener("mousemove", setLockCookie);
-    window.removeEventListener("keypress", setLockCookie);
+    window.removeEventListener("mousedown", setLockCookie);
+    window.removeEventListener("keydown", setLockCookie);
     document.title = 'Locked | <?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
   } else
     setTimeout("lockDown()", 60000);
 }
-if (##LOCKDOWN##) {
+if (<?php echo (isset($cache) && $cache ? '##LOCKDOWN##' : (isset($passcode) && $passcode !== '' ? 1 : 0)); ?>) {
   lockDown();
   setTimeout(function() {
     window.addEventListener("scroll", setLockCookie);
     window.addEventListener("mousemove", setLockCookie);
-    window.addEventListener("keypress", setLockCookie);
+    window.addEventListener("mousedown", setLockCookie);
+    window.addEventListener("keydown", setLockCookie);
   }, 10000);
 }
 function notRobot() {
   document.cookie = "_spbkmk_bookmark_notRobot=1;path=/";
   window.removeEventListener("scroll", notRobot);
   window.removeEventListener("mousemove", notRobot);
-  window.removeEventListener("keypress", notRobot);
+  window.removeEventListener("mousedown", notRobot);
+  window.removeEventListener("keydown", notRobot);
 }
 window.addEventListener("scroll", notRobot);
 window.addEventListener("mousemove", notRobot);
-window.addEventListener("keypress", notRobot);
+window.addEventListener("mousedown", notRobot);
+window.addEventListener("keydown", notRobot);
 function toggleShow(id) {
   var bb = document.getElementById(id);
   if (bb.style.display == "block") {
