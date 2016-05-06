@@ -8,8 +8,10 @@ if ($auth && isset($_GET['action'])) {
     session_destroy();
     break;
   case 'add':
-    $entry = add_bookmark($_POST['u'], $_POST['d'], $_POST['t'], $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
-    $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
+    if (isset($_POST['u']) && $_POST['u']) {
+      $entry = add_bookmark($_POST['u'], $_POST['d'], $_POST['t'], $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
+      $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
+    }
     break;
   case 'delete':
     $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
