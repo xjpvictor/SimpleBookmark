@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: text/javascript');
 include(__DIR__ . '/init.php');
 
 if (isset($passcode) && $passcode) {
