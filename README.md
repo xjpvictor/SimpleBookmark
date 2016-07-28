@@ -35,7 +35,7 @@ This is a simple web-based bookmark manager written in PHP
 
 * Add a cron job to access **parsemail.php** for email bookmarking function
 
-* Email "[Folder name]" as subject and "link" as body to save to specific folder
+* Email "[Folder name]" without quote and brackets as subject and "link" as body to save to specific folder
 
 * Copy or save **bookmarks.json** from Google Chrome or Firefox to _utils_, access `utils/import_chrome.php` or `utils/import_firefox.php` to import bookmarks
 

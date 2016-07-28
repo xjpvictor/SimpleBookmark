@@ -50,7 +50,7 @@ function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => '
 <span class="target" id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'">
 <span class="move" id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"></span>
 <span class="border">
-<a class="url search" href="'.$entry['url'].'" id="'.$level.'_'.$entry['id'].'" title="'.htmlentities($entry['url']).'"><span id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
+<a class="url search" href="'.$entry['url'].'" id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" data-type="url" title="'.htmlentities($entry['url']).'"><span id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 <a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
 </span>
 </span>
@@ -68,7 +68,7 @@ function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => '
 <span class="entry" id="entry-'.$level.'_'.$entry['id'].'" style="display:block;">
 <h3 class="folder_title" style="display:block;">
 <span class="target" id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'">
-<span class="folder_title_name" id="title-'.$level.'_'.$entry['id'].'">&raquo;&nbsp;'.$entry['name'].'</span>
+<span onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" class="folder_title_name" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
 <span class="move" id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true" onclick="toggleShow(\'folder-wrap-'.$level.'_'.$entry['id'].'\');"></span>
 <a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
 <a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d='.$level.'_'.$entry['id'].'\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Add to '.htmlentities($entry['name']).'</a>

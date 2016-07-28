@@ -134,13 +134,15 @@ if (!$auth) {
 </form>
 </div><br/>';
 } else {
+  $cache = true;
+  //$cache = 0;
+
   $cache_file = $cache_dir.'index.html';
-  if (file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
+  if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
     echo str_replace(array('##LOCKDOWN##'), array((isset($passcode) && $passcode !== '' ? 1 : 0)), file_get_contents($cache_file));
     exit;
   }
 
-  $cache = true;
   ob_start();
 
   // Parse bookmark json
@@ -308,21 +310,20 @@ function getStr(event) {
     return false;
   }
 }
-var timeout=null;
-function searchStr(event) {
-  clearTimeout(timeout);
-  timeout=setTimeout(function() {
-    var searchtext=document.getElementById('search').value.toLowerCase();
-    var links=document.getElementsByClassName('search');
-    for(i=0;i<links.length;i++) {
-      var link=links[i];
-      var id=link.id;
-      var elem=document.getElementById('entry-' + id);
-      var form=document.getElementById('editform-' + id);
-      elem.style.display='block';
-      form.style.display='none';
+function searchStrFunction() {
+  var searchtext=document.getElementById('search').value.toLowerCase();
+  var links=document.getElementsByClassName('search');
+  for(i=0;i<links.length;i++) {
+    var link=links[i];
+    var id=link.getAttribute('data-id');
+    var type=link.getAttribute('data-type');
+    var elem=document.getElementById('entry-' + id);
+    var form=document.getElementById('editform-' + id);
+    elem.style.display='block';
+    form.style.display='none';
+    var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
+    if (type=='url') {
       var href=link.getAttribute('href').toLowerCase();
-      var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
       if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
         elem.classList.add('hide');
         var l=id;
@@ -330,7 +331,10 @@ function searchStr(event) {
           document.getElementById('entry-' + l).style.display='block';
           document.getElementById('editform-' + l).style.display='none';
           if (document.getElementById('folder-wrap-' + l).offsetHeight == 0) {
-            document.getElementById(l).classList.add('hide');
+            var t = document.getElementById('title-' + l).innerHTML.toLowerCase();
+            if (t.indexOf(searchtext)=='-1') {
+              document.getElementById(l).classList.add('hide');
+            }
           }
         }
       } else {
@@ -343,12 +347,17 @@ function searchStr(event) {
         }
       }
     }
-    if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
-      document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
-    } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
-      elemns.parentNode.removeChild(elemns);
-    }
-  }, 100);
+  }
+  if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
+    document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
+  } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
+    elemns.parentNode.removeChild(elemns);
+  }
+}
+var timeout=null;
+function searchStr(event) {
+  clearTimeout(timeout);
+  timeout=setTimeout(searchStrFunction(), 100);
 }
 </script>
 <?php
