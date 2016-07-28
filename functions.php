@@ -38,9 +38,10 @@ function parse_bookmark_json($bookmark_json) {
   return $bookmarks;
 }
 
-function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => ''), $level = '') {
+function output_bookmarks_recursive($bookmarks, $output = array('url' => '', 'folder' => ''), $level = '') {
   global $site_url;
-  foreach ($bookmarks as $entry) {
+
+  foreach ($bookmarks as $bookmark_id => $entry) {
     if (isset($entry['id'])) {
       if ($entry['type'] == 'url') {
         if (!isset($entry['name']) || $entry['name'] == '')
@@ -58,6 +59,7 @@ function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => '
 <form class="editform" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
 <input name="u" type="text" required value="'.htmlentities($entry['url']).'"><br/>
+<select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select><br/><br/>
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a><br/>
@@ -79,6 +81,7 @@ function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => '
 </span>
 <form class="editform editfolder" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
+<select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select><br/><br/>
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this folder? Note: bookmarks in this folder will NOT be deleted.\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>
@@ -92,11 +95,22 @@ function output_bookmarks($bookmarks, $output = array('url' => '', 'folder' => '
 <span id="folder-wrap-'.$level.'_'.$entry['id'].'" style="display:block;">'."\n";
         $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks($entry['entries'], $output, $level.'_'.$entry['id']);
+          $output = output_bookmarks_recursive($entry['entries'], $output, $level.'_'.$entry['id'], $entry['name']);
         $output['url'] .= '</span><span class="target" id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0">&nbsp;</span></div>'."\n";
       }
     }
   }
+  return $output;
+}
+
+function output_bookmarks($bookmarks) {
+  $output = output_bookmarks_recursive($bookmarks);
+
+  $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
+  $output['url'] = preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
+    return str_replace('value="'.$match[1].'"', 'value="'.$match[1].'" selected', $output['folder']);
+  }, $output['url']);
+
   return $output;
 }
 

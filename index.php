@@ -22,7 +22,11 @@ if ($auth && isset($_GET['action'])) {
     if (isset($_POST['u']))
       $update['url'] = $_POST['u'];
     $entry = update_bookmark($_GET['id'], $update, $bookmark_json);
-    $anchor = $_GET['id'];
+    if (isset($_POST['l']) && $_POST['l'] !== substr($_GET['id'], 0, strrpos($_GET['id'], '_'))) {
+      $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
+      move_bookmark($entry, $_POST['l'].'_0', $bookmark_json);
+    }
+    $anchor = $_POST['l'].'_'.$entry['id'];
     break;
   case 'move':
     $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
@@ -135,7 +139,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  //$cache = 0;
+  $cache = 0;
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
@@ -161,7 +165,6 @@ if (!$auth) {
   echo '<label><input required name="t" type="radio" value="folder" onclick="document.getElementById(\'addform-url-title\').style.display=\'none\';">folder</label></p>'."\n";
   echo '<p id="addform-url-title">URL Title (Optional): <input type="text" name="n"></p>'."\n";
   echo '<p>Location: <select required name="d">'."\n";
-  echo '<option value="_0">Bookmarks</option>'."\n";
   echo $output['folder'];
   echo '</select></p>'."\n";
   echo '<p class="sort-top" id="sort-_0">Sort all bookmarks by:
