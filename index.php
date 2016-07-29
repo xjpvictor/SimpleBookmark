@@ -140,7 +140,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  $cache = 0;
+  //$cache = 0;
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
