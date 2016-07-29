@@ -85,10 +85,11 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 .folder{border-bottom:1px solid #444;margin-top:1em;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
+.folder_title_name{cursor:pointer;}
 .url .border{padding-left:8px;border-left:3px solid #666;display:block;}
 .target{position:relative;z-index:5;display:block;}
 .url .target{margin-left:3px;}
-.folder>.target{margin-top:-23px;margin-bottom:-1px;height:23px;}
+.folder>.target{margin-top:-23px;margin-bottom:14px;height:23px;}
 .move{position:absolute;bottom:0;z-index:8;width:9px;height:100%;background:transparent;}
 .folder_title .move{left:-1px;}
 .url .move{left:-3px;}
@@ -108,7 +109,7 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 #foot a{color:#666;}
 #foot a:hover{color:#ca2017;}
 .move.drag{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
-.target.drag{padding-top:23px;}
+.target.drag{padding-top:50px;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
 @media screen and (max-width:800px){
@@ -139,7 +140,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  //$cache = 0;
+  $cache = 0;
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
@@ -250,8 +251,11 @@ function toggleShow(id) {
     bb.style.display = "block";
   }
 }
+var eleCounts = {};
+var moveId;
 function handleDragStart(e) {
   id = this.getAttribute('data-id');
+  moveId = id;
   e.dataTransfer.setData('text/html', id);
   this.classList.add('drag');
   this.innerHTML = document.getElementById('title-' + id).innerHTML;
@@ -261,10 +265,29 @@ function handleDragEnd(e) {
   this.innerHTML = '';
 }
 function handleDragEnter(e) {
-  this.classList.add('drag');
+  var i=this.getAttribute('data-id');
+  if (eleCounts[i]) {
+    eleCounts[i]++;
+  } else {
+    eleCounts[i]=1;
+  }
+  if (i !== moveId) {
+    this.classList.add('drag');
+  }
 }
 function handleDragLeave(e) {
-  this.classList.remove('drag');
+  var ele=this;
+  var i=this.getAttribute('data-id');
+  setTimeout(function() {
+    if (eleCounts[i]) {
+      eleCounts[i]--;
+    } else {
+      eleCounts[i]=0;
+    }
+    if (eleCounts[i] <= 0) {
+      ele.classList.remove('drag');
+    }
+  }, 1);
 }
 function handleDragOver(e) {
   if (e.preventDefault) {
