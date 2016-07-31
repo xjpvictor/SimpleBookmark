@@ -89,7 +89,7 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 .url .border{padding-left:8px;border-left:3px solid #666;display:block;}
 .target{position:relative;z-index:5;display:block;}
 .url .target{margin-left:3px;}
-.folder>.target{margin-top:-23px;margin-bottom:14px;height:23px;}
+.folder>.target{margin-top:-23px;margin-bottom:-1px;height:23px;}
 .move{position:absolute;bottom:0;z-index:8;width:9px;height:100%;background:transparent;}
 .folder_title .move{left:-1px;}
 .url .move{left:-3px;}
