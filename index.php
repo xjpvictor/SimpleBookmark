@@ -392,6 +392,7 @@ if (file_exists($f = $data_dir . 'foot.php'))
 ?>
 <p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>
+<img src='parsemail.php' alt='Parse mail' style="position:fixed;left:-3px;top:-20px;width:0;height:0;border:none;"/>
 </body>
 </html>
 
