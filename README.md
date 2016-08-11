@@ -37,7 +37,7 @@ This is a simple web-based bookmark manager written in PHP
 
 * Email "[Folder name]" without quote and brackets as subject and "link" as body to save to specific folder (Only works for top-level folders)
 
-* Copy or save **bookmarks.json** from Google Chrome or Firefox to _utils_, access `utils/import_chrome.php` or `utils/import_firefox.php` to import bookmarks
+* Import **bookmarks.json** from Google Chrome or Firefox to import bookmarks
 
 ## License ##
 
