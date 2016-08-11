@@ -95,7 +95,7 @@ function output_bookmarks_recursive($bookmarks, $output = array('url' => '', 'fo
 <span id="folder-wrap-'.$level.'_'.$entry['id'].'" style="display:block;">'."\n";
         $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks_recursive($entry['entries'], $output, $level.'_'.$entry['id'], $entry['name']);
+          $output = output_bookmarks_recursive($entry['entries'], $output, $level.'_'.$entry['id']);
         $output['url'] .= '</span><span class="target" id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0">&nbsp;</span></div>'."\n";
       }
     }
@@ -115,8 +115,10 @@ function output_bookmarks($bookmarks) {
 }
 
 function add_bookmark($url, $folder, $type, $bookmark_json, $name = null) {
-  $bookmark = parse_bookmark_json($bookmark_json);
-  $id = (++$bookmark[1]);
+  if ($bookmark = parse_bookmark_json($bookmark_json))
+    $id = (++$bookmark[1]);
+  else
+    $id = 1;
   if ($type == 'url' && !isset($name)) {
     $name = substr($url, 0, 140);
     //$str = @file_get_contents($url);

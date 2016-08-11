@@ -112,6 +112,12 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .target.drag{padding-top:50px;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
+.import-form{display:inline-block;}
+.file-button-wrap{width:200px;height:39px;padding:0;margin:1em 1em 0 0;box-shadow:0 0 1px #333;background:#eee;position:relative;}
+.file-button-wrap:hover{background:#ddd;}
+.file-button{width:100%;height:1.3em;line-height:1.3em;padding:10px 0;margin:0 auto;text-align:center;border:none;background-color:transparent;display:inline-block;cursor:pointer;float:right;}
+.file-button-hide-wrap{position:absolute;opacity:0;top:0;right:0;width:100%;height:100%;border:none;margin:0;padding:0;z-index:2;}
+.file-button-hide{width:100%;height:100%;border:none;margin:0;padding:0;}
 @media screen and (max-width:800px){
 #addform form input[type="text"]{width:80%;}
 #addform form #addform-url-title input[type="text"]{width:60%;}
@@ -389,6 +395,23 @@ function searchStr(event) {
 <?php
 if (file_exists($f = $data_dir . 'foot.php'))
   include($f);
+
+echo '<form class="import-form" id="chrome-upload" method="POST" action="utils/import_chrome.php" enctype="multipart/form-data">
+<div class="file-button-wrap"">
+<span class="file-button">Import Chrome Bookmarks</span>
+<span class="file-button-hide-wrap">
+<input type="file" name="f" class="file-button-hide" accept="application/enex+xml" onchange="document.getElementById(\'chrome-upload\').submit();">
+</span>
+</div>
+</form>';
+echo '<form class="import-form" id="firefox-upload" method="POST" action="utils/import_firefox.php" enctype="multipart/form-data">
+<div class="file-button-wrap"">
+<span class="file-button">Import Firefox Bookmarks</span>
+<span class="file-button-hide-wrap">
+<input type="file" name="f" class="file-button-hide" accept="application/enex+xml" onchange="document.getElementById(\'firefox-upload\').submit();">
+</span>
+</div>
+</form>';
 ?>
 <p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>

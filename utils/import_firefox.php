@@ -1,9 +1,23 @@
 <?php
+include(__DIR__ . '/../init.php');
 
-$data = json_decode(file_get_contents(__DIR__ . '/bookmark.json'), 1);
-$data = $data['children'][2]['children'];
+if (isset($_FILES['f']['tmp_name']) && $_FILES['f']['tmp_name']) {
+  $data = json_decode(file_get_contents($_FILES['f']['tmp_name']), 1);
+  $data = $data['children'][2]['children'];
+  if (is_uploaded_file($_FILES['f']['tmp_name']))
+    unlink($_FILES['f']['tmp_name']);
+  $_FILES = array();
+} else {
+  header('Location: '.$site_url);
+  exit;
+}
 
-$id = 0;
+if (file_exists($bookmark_json)) {
+  $bookmarks = parse_bookmark_json($bookmark_json);
+  $id = (++$bookmark[1]);
+} else {
+  $id = 0;
+}
 
 function toarray($data, $id) {
   $bookmarks = array();
@@ -26,9 +40,14 @@ function toarray($data, $id) {
   return array($bookmarks, $id);
 }
 
-$bookmarks = toarray($data, $id);
-$bookmarks[0] = array('entries' => $bookmarks[0]);
+$bookmarks_import = toarray($data, $id);
+if (isset($bookmarks)) {
+  $bookmarks[0]['entries'] = array_merge($bookmarks[0]['entries'], $bookmarks_import[0]);
+} else {
+  $bookmarks = array(0 => array('entries' => $bookmarks_import[0]), 1 => $bookmarks_import[1]);
+}
 
-file_put_contents(__DIR__ . '/bookmarks.json', json_encode($bookmarks));
+file_put_contents($bookmark_json, json_encode($bookmarks));
 
+header('Location: '.$site_url);
 ?>
