@@ -1,4 +1,8 @@
 <?php
+if ((isset($_SERVER["HTTP_X_PURPOSE"]) && strtolower($_SERVER["HTTP_X_PURPOSE"]) == "preview") ||  (isset($_SERVER["HTTP_X_MOZ"]) && strtolower($_SERVER["HTTP_X_MOZ"]) == "prefetch")) {
+  exit;
+}
+
 if (!file_exists(($config_file = ($data_dir = __DIR__ . '/data/').'config.php')))
   exit('Please update "config.php" file according to "config.php-dist"');
 if (!function_exists('password_hash'))
