@@ -29,6 +29,8 @@ This is a simple web-based bookmark manager written in PHP
 
 * All personal data is in the directory **data**. Backup is only needed for this directory.
 
+* **/cache**, **/data** and **/session** directories have to be writable to **http** user
+
 ## Usage ##
 
 * Drag bookmarklet to bookmarks bar to enable bookmarking from web
