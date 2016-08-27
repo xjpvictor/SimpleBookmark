@@ -396,7 +396,8 @@ function searchStr(event) {
 if (file_exists($f = $data_dir . 'foot.php'))
   include($f);
 
-echo '<form class="import-form" id="chrome-upload" method="POST" action="utils/import_chrome.php" enctype="multipart/form-data">
+if ($auth) {
+  echo '<form class="import-form" id="chrome-upload" method="POST" action="utils/import_chrome.php" enctype="multipart/form-data">
 <div class="file-button-wrap"">
 <span class="file-button">Import Chrome Bookmarks</span>
 <span class="file-button-hide-wrap">
@@ -404,7 +405,7 @@ echo '<form class="import-form" id="chrome-upload" method="POST" action="utils/i
 </span>
 </div>
 </form>';
-echo '<form class="import-form" id="firefox-upload" method="POST" action="utils/import_firefox.php" enctype="multipart/form-data">
+  echo '<form class="import-form" id="firefox-upload" method="POST" action="utils/import_firefox.php" enctype="multipart/form-data">
 <div class="file-button-wrap"">
 <span class="file-button">Import Firefox Bookmarks</span>
 <span class="file-button-hide-wrap">
@@ -412,6 +413,7 @@ echo '<form class="import-form" id="firefox-upload" method="POST" action="utils/
 </span>
 </div>
 </form>';
+}
 ?>
 <p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>
