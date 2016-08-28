@@ -1,5 +1,6 @@
 <?php
 if ((isset($_SERVER["HTTP_X_PURPOSE"]) && strtolower($_SERVER["HTTP_X_PURPOSE"]) == "preview") ||  (isset($_SERVER["HTTP_X_MOZ"]) && strtolower($_SERVER["HTTP_X_MOZ"]) == "prefetch")) {
+  http_response_code(404);
   exit;
 }
 
