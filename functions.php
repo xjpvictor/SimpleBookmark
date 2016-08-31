@@ -127,6 +127,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     $str = curl_exec($ch);
     curl_close($ch);
     if (strlen($str)) {
