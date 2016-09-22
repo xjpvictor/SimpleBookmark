@@ -238,7 +238,7 @@ if (!$auth) {
   // Show bookmarks
   echo '<div id="content"><div id="folder-wrap">'."\n";
   echo '<div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
-  echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+window.location;window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
+  echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+encodeURIComponent(window.location);window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
   echo '##SYNCLIST##';
   echo '</div>'."\n";
 
