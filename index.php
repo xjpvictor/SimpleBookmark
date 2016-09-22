@@ -82,7 +82,7 @@ if ($auth) {
 <html lang="en-US">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title><?php echo htmlentities($site_name); ?></title>
 <meta name="description" content="<?php echo htmlentities($site_name); ?>" />
 <link rel="profile" href="http://gmpg.org/xfn/11" />
@@ -256,8 +256,10 @@ if (!$auth) {
 </div> <!-- End of main -->
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
-<input id="passcode" type="password">
-<input type="submit" value="Unlock" onclick="var elem=document.getElementById('passcode');var script=document.createElement('script');script.id='lock_s';script.src='passcode.php?p='+elem.value;document.body.appendChild(script);elem.value='';">
+<form method="POST" action="javascript:void(0);" onSubmit="var elem=document.getElementById('passcode');var script=document.createElement('script');script.id='lock_s';script.src='passcode.php?p='+elem.value;document.body.appendChild(script);elem.value='';">
+<input id="passcode" type="password" autofocus>
+<input type="submit" value="Unlock">
+</form>
 </div>
 <div id="foot">
 <script>
