@@ -1,4 +1,10 @@
 <?php
+function addhttp($url) {
+  if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
+    $url = "http://" . $url;
+  }
+  return $url;
+}
 function toutf8($str) {
   if (!$str)
     return $str;
@@ -34,52 +40,62 @@ function auth($expire = null) {
 }
 
 function parse_bookmark_json($bookmark_json) {
-  $bookmarks = json_decode(file_get_contents($bookmark_json), 1);
+  $bookmarks = (file_exists($bookmark_json) ? json_decode(file_get_contents($bookmark_json), 1) : false);
   return $bookmarks;
 }
 
-function output_bookmarks_recursive($bookmarks, $output = array('url' => '', 'folder' => ''), $level = '') {
+function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json, $output = array('url' => '', 'folder' => ''), $level = '') {
   global $site_url;
 
   foreach ($bookmarks as $bookmark_id => $entry) {
     if (isset($entry['id'])) {
       if ($entry['type'] == 'url') {
-        if (!isset($entry['name']) || $entry['name'] == '')
-          $entry['name'] = $entry['url'];
-        $output['url'] .= '<!-- url '.$entry['id'].' in '.$level.' -->
-<p class="entry url" style="display:block;" id="entry-'.$level.'_'.$entry['id'].'">
-<span class="target" id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'">
-<span class="move" id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"></span>
+        if (!isset($entry['hash']))
+          $entry['hash'] = sha1($entry['url']);
+        if ($deduplicate && is_array($deduplicate) && isset($deduplicate[$entry['hash']]))
+          $entry = delete_bookmark('_'.$entry['id'], 0, $bookmark_json);
+        else  {
+          if (is_array($deduplicate))
+            $deduplicate[$entry['hash']] = 1;
+          else
+            $deduplicate = array($entry['hash'] => 1);
+          if (!isset($entry['name']) || $entry['name'] == '')
+            $entry['name'] = $entry['url'];
+          $output['url'] .= '<!-- url '.$entry['id'].' in '.($level ? $level : '0').' -->
+<p class="entry url" style="display:block;"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border">
-<a class="url search" href="'.$entry['url'].'" id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" data-type="url" title="'.htmlentities($entry['url']).'"><span id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
-<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
+<a class="url'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
+'.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 </span>
 </span>
 </p>
-<form class="editform" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
+'.($allow_edit ? '<form class="editform" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
 <input name="u" type="text" required value="'.htmlentities($entry['url']).'"><br/>
 <select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select><br/><br/>
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a><br/>
-</form>'."\n";
+</form>' : '')."\n";
+        }
       } elseif ($entry['type'] == 'folder') {
-        $output['url'] .= '<!-- folder '.$entry['id'].' in '.$level.' -->
-<div class="folder" id="'.$level.'_'.$entry['id'].'">
-<span class="entry" id="entry-'.$level.'_'.$entry['id'].'" style="display:block;">
+        $output['url'] .= '<!-- folder '.$entry['id'].' in '.($level ? $level : '0').' -->
+<div class="folder"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="entry"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;">
 <h3 class="folder_title" style="display:block;">
-<span class="target" id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'">
-<span onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" class="folder_title_name" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
-<span class="move" id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true" onclick="toggleShow(\'folder-wrap-'.$level.'_'.$entry['id'].'\');"></span>
-<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
+<span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="folder_title_name"'.($allow_edit ? ' onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
+<span class="move"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true" onclick="toggleShow(\'folder-wrap-'.$level.'_'.$entry['id'].'\');"' : '').'></span>
+'.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
 <a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d='.$level.'_'.$entry['id'].'\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Add to '.htmlentities($entry['name']).'</a>
 <a class="bookmarklet" href="javascript:if(document.getElementById(\'spbkmk\')){document.getElementById(\'spbkmk\').parentNode.removeChild(document.getElementById(\'spbkmk\'));}var bml=document.createElement(\'div\');bml.id=\'spbkmk\';bml.style.setProperty(\'position\',\'fixed\',\'important\');bml.style.setProperty(\'z-index\',2147483640,\'important\');bml.style.setProperty(\'top\',0,\'important\');bml.style.setProperty(\'left\',0,\'important\');bml.style.setProperty(\'right\',0,\'important\');bml.style.setProperty(\'text-align\',\'left\',\'important\');bml.style.setProperty(\'background-color\',\'#fff\',\'important\');bml.style.setProperty(\'min-height\',\'28px\',\'important\');bml.style.setProperty(\'max-height\',\'56px\',\'important\');bml.style.setProperty(\'overflow\',\'hidden\',\'important\');bml.style.setProperty(\'border-bottom-width\',\'1px\',\'important\');bml.style.setProperty(\'border-bottom-style\',\'solid\',\'important\');bml.style.setProperty(\'border-bottom-color\',\'#666\',\'important\');document.body.appendChild(bml);var script=document.createElement(\'script\');script.src=\''.$site_url.'bookmarkbar.php?folder='.$level.'_'.$entry['id'].'\';bml.appendChild(script);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open '.htmlentities($entry['name']).' as bookmarkbar</a>
-<a class="bookmarklet" href="javascript:window.open(\''.$site_url.'#'.$level.'_'.$entry['id'].'\', \'spbkmk\', \'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=600,height=800\');" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open '.htmlentities($entry['name']).' in new window</a>
+<a class="bookmarklet" href="javascript:window.open(\''.$site_url.'#'.$level.'_'.$entry['id'].'\', \'spbkmk\', \'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=600,height=800\');" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Open '.htmlentities($entry['name']).' in new window</a>' : '').'
 </span>
 </h3>
 </span>
-<form class="editform editfolder" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
+'.($allow_edit ? '<form class="editform editfolder" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
 <select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select><br/><br/>
 <input type="submit" value="Update">
@@ -91,20 +107,21 @@ function output_bookmarks_recursive($bookmarks, $output = array('url' => '', 'fo
 <a class="sort-date" href="index.php?action=sort&id='.$level.'_'.$entry['id'].'&sort=date_added">Date</a> or
 <a class="sort-reverse" href="index.php?action=sort&id='.$level.'_'.$entry['id'].'&sort=0">Reverse order</a>
 </p>
-</form>
-<span id="folder-wrap-'.$level.'_'.$entry['id'].'" style="display:block;">'."\n";
-        $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
+</form>' : '').'
+<span'.($allow_edit ? ' id="folder-wrap-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;">'."\n";
+        if ($allow_edit)
+          $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks_recursive($entry['entries'], $output, $level.'_'.$entry['id']);
-        $output['url'] .= '</span><span class="target" id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0">&nbsp;</span></div>'."\n";
+          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $bookmark_json, $output, $level.'_'.$entry['id']);
+        $output['url'] .= '</span><span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
       }
     }
   }
   return $output;
 }
 
-function output_bookmarks($bookmarks) {
-  $output = output_bookmarks_recursive($bookmarks);
+function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 0) {
+  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json);
 
   $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
   $output['url'] = preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
@@ -114,7 +131,9 @@ function output_bookmarks($bookmarks) {
   return $output;
 }
 
-function add_bookmark($url, $folder, $type, $bookmark_json, $name = null) {
+function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redirect = 0) {
+  global $site_url;
+
   if ($bookmark = parse_bookmark_json($bookmark_json))
     $id = (++$bookmark[1]);
   else
@@ -135,7 +154,10 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null) {
       $name = (isset($title[1]) ? toutf8($title[1]) : '');
     }
   }
-  $new = array('_'.$id => array('id' => $id, 'type' => $type, 'name' => ($type == 'url' ? $name : $url), 'date_added' => (isset($time) ? $time : time())));
+  $hash = sha1($url);
+  if ($type == 'url' && $redirect)
+    $url = $site_url.'index.php?action=redirect&u='.urlencode($url).'&id=_'.$id;
+  $new = array('_'.$id => array('id' => $id, 'type' => $type, 'name' => ($type == 'url' ? $name : $url), 'date_added' => (isset($time) ? $time : time()), 'hash' => $hash));
   if ($type == 'url')
     $new['_'.$id]['url'] = $url;
   $data = $new['_'.$id];

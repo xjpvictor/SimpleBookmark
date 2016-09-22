@@ -19,6 +19,12 @@ This is a simple web-based bookmark manager written in PHP
 
 * Import from Google Chrome or Firefox
 
+* URL Sync
+
+   Prefix `bookmark_url/?u=` to url to be synced
+
+   URLs will be deleted once clicked
+
 ## Requirements and Installations ##
 
 * PHP >= 5.5.3

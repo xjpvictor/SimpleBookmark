@@ -2,48 +2,78 @@
 include(__DIR__ . '/init.php');
 
 // Process action
-if ($auth && isset($_GET['action'])) {
-  switch ($_GET['action']) {
-  case 'logout':
-    session_destroy();
-    break;
-  case 'add':
-    if (isset($_POST['u']) && $_POST['u']) {
-      $entry = add_bookmark($_POST['u'], $_POST['d'], $_POST['t'], $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
-      $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
+if ($auth) {
+  if (isset($_GET['action'])) {
+    switch ($_GET['action']) {
+    case 'logout':
+      session_destroy();
+      break;
+    case 'add':
+      if (isset($_POST['u']) && $_POST['u']) {
+        $entry = add_bookmark($_POST['u'], $_POST['d'], $_POST['t'], $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
+        $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
+      }
+      break;
+    case 'delete':
+      if (isset($_GET['id']) && $_GET['id']) {
+        if (isset($_GET['mode']) && $_GET['mode'] == 'sync') {
+          $entry = delete_bookmark($_GET['id'], 0, $sync_json);
+        } else {
+          $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
+          $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
+        }
+      }
+      break;
+    case 'redirect':
+      if (isset($_GET['u']) && $_GET['u']) {
+        if (isset($_GET['id']) && $_GET['id']) {
+          $url = urldecode($_GET['u']);
+          $entry = delete_bookmark($_GET['id'], 0, $sync_json);
+          header('Location: '.$url);
+          exit;
+        }
+      }
+      break;
+    case 'edit':
+      if (isset($_GET['id']) && $_GET['id']) {
+        $update = array('name' => $_POST['n']);
+        if (isset($_POST['u']))
+          $update['url'] = $_POST['u'];
+        $entry = update_bookmark($_GET['id'], $update, $bookmark_json);
+        if (isset($_POST['l']) && $_POST['l'] !== substr($_GET['id'], 0, strrpos($_GET['id'], '_'))) {
+          $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
+          move_bookmark($entry, $_POST['l'].'_0', $bookmark_json);
+        }
+        $anchor = $_POST['l'].'_'.$entry['id'];
+      }
+      break;
+    case 'move':
+      if (isset($_GET['id']) && $_GET['id']) {
+        $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
+        move_bookmark($entry, $_GET['position'], $bookmark_json);
+        $anchor = substr($_GET['position'], 0, strrpos($_GET['position'], '_')).'_'.$entry['id'];
+      }
+      break;
+    case 'sort':
+      if (isset($_GET['id']) && $_GET['id']) {
+        $entry = sort_bookmark($_GET['id'], $_GET['sort'], (isset($_GET['recursive']) ? $_GET['recursive'] : 0), $bookmark_json);
+        $anchor = ($_GET['id'] == '_0' ? '' : $_GET['id']);
+      }
+      break;
+    case 'export':
+      header('Content-Type: text/plain');
+      readfile($bookmark_json);
+      exit;
     }
-    break;
-  case 'delete':
-    $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
-    $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
-    break;
-  case 'edit':
-    $update = array('name' => $_POST['n']);
-    if (isset($_POST['u']))
-      $update['url'] = $_POST['u'];
-    $entry = update_bookmark($_GET['id'], $update, $bookmark_json);
-    if (isset($_POST['l']) && $_POST['l'] !== substr($_GET['id'], 0, strrpos($_GET['id'], '_'))) {
-      $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
-      move_bookmark($entry, $_POST['l'].'_0', $bookmark_json);
-    }
-    $anchor = $_POST['l'].'_'.$entry['id'];
-    break;
-  case 'move':
-    $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
-    move_bookmark($entry, $_GET['position'], $bookmark_json);
-    $anchor = substr($_GET['position'], 0, strrpos($_GET['position'], '_')).'_'.$entry['id'];
-    break;
-  case 'sort':
-    $entry = sort_bookmark($_GET['id'], $_GET['sort'], (isset($_GET['recursive']) ? $_GET['recursive'] : 0), $bookmark_json);
-    $anchor = ($_GET['id'] == '_0' ? '' : $_GET['id']);
-    break;
-  case 'export':
-    header('Content-Type: text/plain');
-    readfile($bookmark_json);
+    header('Location: index.php'.(isset($anchor) && $anchor ? '#entry-'.$anchor : ''));
+    exit;
+  } elseif (isset($_GET['u'])) {
+    $url = addhttp(urldecode(substr($_SERVER['QUERY_STRING'], 2)));
+    $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1);
+    echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to original url?")) {window.location="'.$url.'";} else {window.location="'.$site_url.'";}</script></body></html>';
+    //header('Location: '.$url);
     exit;
   }
-  header('Location: index.php'.(isset($anchor) && $anchor ? '#entry-'.$anchor : ''));
-  exit;
 }
 ?>
 
@@ -79,9 +109,14 @@ body,#main{padding:0;margin:0;}
 a.edit,a.delete{margin-left:5px;font-weight:normal;}
 a.edit{color:#666;}
 a.delete{color:red;}
+a.delete.noedit{color:#666;}
 a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:10px 0 0 10px;color:#666;text-decoration:none;background-color:#eee;border-radius:3px;border:none;font-size:0.9em;cursor:move;font-weight:normal;display:inline-block;}
 #addform-more a.bookmarklet{margin-left:0;margin-bottom:10px;}
 #addform form #addform-url-title input[type="text"]{width:40%;}
+h2.cat{margin:20px 10px 0px 0;display:inline-block;}
+#sync h2.cat{margin:20px 0 10px;}
+#sync{margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid #000;}
+#sync a.bookmarklet{margin-top:17px;vertical-align:top;}
 .folder{border-bottom:1px solid #444;margin-top:1em;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
@@ -94,6 +129,7 @@ a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:1
 .folder_title .move{left:-1px;}
 .url .move{left:-3px;}
 .move:hover{cursor:move;}
+.move.noedit:hover{cursor:default;}
 .editform{display:none;margin:20px 10px 20px;}
 .folder>.editform{margin-top:16px;}
 .folder>.editfolder{margin-top:20px;}
@@ -148,9 +184,22 @@ if (!$auth) {
   $cache = true;
   //$cache = 0;
 
+  $cache_file_synclist = $cache_dir.'sync.html';
+  if ($cache && file_exists($cache_file_synclist) && file_exists($sync_json) && filemtime($cache_file_synclist) >= filemtime($sync_json))
+    $sync_output = file_get_contents($cache_file_synclist);
+  else {
+    $sync = (file_exists($sync_json) ? parse_bookmark_json($sync_json) : false);
+    $output_sync = ($sync !== false ? output_bookmarks($sync[0]['entries'], $sync_json, 0, 1) : '');
+    if ($output_sync && $output_sync['url'])
+      $sync_output = $output_sync['url'];
+    else
+      $sync_output = '';
+    file_put_contents($cache_file_synclist, $sync_output);
+  }
+
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
-    echo str_replace(array('##LOCKDOWN##'), array((isset($passcode) && $passcode !== '' ? 1 : 0)), file_get_contents($cache_file));
+    echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), file_get_contents($cache_file));
     exit;
   }
 
@@ -158,7 +207,7 @@ if (!$auth) {
 
   // Parse bookmark json
   $bookmarks = parse_bookmark_json($bookmark_json);
-  $output = output_bookmarks($bookmarks[0]['entries']);
+  $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
 
   // Show add bookmark box
   echo '<div id="addform">'."\n";
@@ -188,7 +237,14 @@ if (!$auth) {
 
   // Show bookmarks
   echo '<div id="content"><div id="folder-wrap">'."\n";
+  echo '<div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
+  echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+window.location;window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
+  echo '##SYNCLIST##';
+  echo '</div>'."\n";
+
+  echo '<div id="bookmarks"><h2 class="cat">My Bookmarks</h2>'."\n";
   echo $output['url'];
+  echo '</div>'."\n";
   echo '</div></div>'."\n";
 }
 ?>
@@ -318,10 +374,12 @@ function handleDrop(e) {
 var targets=document.getElementsByClassName('target');
 for (i = 0;i < targets.length;i++) {
   var target=targets[i];
-  target.addEventListener('dragover', handleDragOver, false);
-  target.addEventListener('dragenter', handleDragEnter, false);
-  target.addEventListener('dragleave', handleDragLeave, false);
-  target.addEventListener('drop', handleDrop, false);
+  if (!target.classList.contains('noedit')) {
+    target.addEventListener('dragover', handleDragOver, false);
+    target.addEventListener('dragenter', handleDragEnter, false);
+    target.addEventListener('dragleave', handleDragLeave, false);
+    target.addEventListener('drop', handleDrop, false);
+  }
 };
 var moves=document.getElementsByClassName('move');
 for (i=0;i<moves.length;i++) {
@@ -344,6 +402,11 @@ function getStr(event) {
 }
 function searchStrFunction() {
   var searchtext=document.getElementById('search').value.toLowerCase();
+  if (searchtext) {
+    document.getElementById('sync').style.display='none';
+  } else {
+    document.getElementById('sync').style.display='block';
+  }
   var links=document.getElementsByClassName('search');
   for(i=0;i<links.length;i++) {
     var link=links[i];
@@ -426,7 +489,7 @@ if (isset($cache) && $cache) {
   $output = ob_get_contents();
   ob_clean();
   file_put_contents($cache_file, $output);
-  echo str_replace(array('##LOCKDOWN##'), array((isset($passcode) && $passcode !== '' ? 1 : 0)), $output);
+  echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), $output);
   if (isset($_SESSION['lock']))
     unset($_SESSION['lock']);
   ob_end_flush();

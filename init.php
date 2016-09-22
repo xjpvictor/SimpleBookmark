@@ -10,6 +10,7 @@ if (!function_exists('password_hash'))
   exit('Please update your php version >= 5.5.3');
 
 $bookmark_json = $data_dir.'bookmarks.json';
+$sync_json = $data_dir.'sync.json';
 $cache_dir = __DIR__ . '/cache/';
 
 if (@filemtime($config_file) && function_exists('opcache_invalidate'))
