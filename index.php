@@ -87,6 +87,8 @@ if ($auth) {
 <meta name="description" content="<?php echo htmlentities($site_name); ?>" />
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" href="webapp-icon.png" />
+<link rel="icon" href="webapp-icon.png" />
 <style type="text/css" media="all">
 <!--
 html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
