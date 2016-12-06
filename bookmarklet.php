@@ -93,7 +93,7 @@ function spbclose(){window.top.postMessage(\'spb_close\', \''.urldecode($_GET['h
     ob_start();
 
     $bookmarks = parse_bookmark_json($bookmark_json);
-    $output = output_bookmarks($bookmarks[0]['entries']);
+    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
     echo '<form method="post" action="'.$url.'">';
     echo '<p>Add to: <select required name="d">'."\n";
     echo $output['folder'];

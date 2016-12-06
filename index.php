@@ -70,7 +70,7 @@ if ($auth) {
   } elseif (isset($_GET['u'])) {
     $url = addhttp(urldecode(substr($_SERVER['QUERY_STRING'], 2)));
     $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1);
-    echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to original url?")) {window.location="'.$url.'";} else {window.location="'.$site_url.'";}</script></body></html>';
+    echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to '.htmlentities($site_name).'?")) {window.location="'.$site_url.'";} else {window.location="'.$url.'";}</script></body></html>';
     //header('Location: '.$url);
     exit;
   }
