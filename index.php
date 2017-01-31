@@ -92,6 +92,7 @@ if ($auth) {
 <style type="text/css" media="all">
 <!--
 html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
+html,body{max-width:100%;overflow-x:hidden;}
 h3,.folder_title_name{font-size:16px;margin:0 0 1em;font-weight:bold;}
 a {color:#0000cc;text-decoration:none;}
 a:visited{color:#0000cc;}
@@ -485,6 +486,11 @@ if ($auth) {
 <p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>
 <img src='parsemail.php' alt='Parse mail' style="position:fixed;left:-3px;top:-20px;width:0;height:0;border:none;"/>
+<script>
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
+});
+</script>
 </body>
 </html>
 
