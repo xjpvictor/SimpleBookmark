@@ -148,7 +148,7 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 #foot a{color:#666;}
 #foot a:hover{color:#ca2017;}
 .move.drag{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
-.target.drag{padding-top:50px;}
+.target.drag{padding-top:15px;border-top:2px dashed #999;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
 .import-form{display:inline-block;}
@@ -318,8 +318,10 @@ function toggleShow(id) {
     bb.style.display = "block";
   }
 }
-var eleCounts = {};
 var moveId;
+function removeClassDrag(ele) {
+  ele.classList.remove('drag');
+}
 function handleDragStart(e) {
   id = this.getAttribute('data-id');
   moveId = id;
@@ -331,30 +333,16 @@ function handleDragEnd(e) {
   this.classList.remove('drag');
   this.innerHTML = '';
 }
+var dragEnterId = 0;
 function handleDragEnter(e) {
   var i=this.getAttribute('data-id');
-  if (eleCounts[i]) {
-    eleCounts[i]++;
-  } else {
-    eleCounts[i]=1;
-  }
   if (i !== moveId) {
     this.classList.add('drag');
+    if (dragEnterId && i !== dragEnterId) {
+      removeClassDrag(document.getElementById('target-'+dragEnterId));
+    }
+    dragEnterId = i;
   }
-}
-function handleDragLeave(e) {
-  var ele=this;
-  var i=this.getAttribute('data-id');
-  setTimeout(function() {
-    if (eleCounts[i]) {
-      eleCounts[i]--;
-    } else {
-      eleCounts[i]=0;
-    }
-    if (eleCounts[i] <= 0) {
-      ele.classList.remove('drag');
-    }
-  }, 1);
 }
 function handleDragOver(e) {
   if (e.preventDefault) {
@@ -373,6 +361,7 @@ function handleDrop(e) {
     window.location = '<?php echo $site_url; ?>index.php?action=move&id=' + sour + '&position=' + dest;
   } else {
     this.classList.remove('drag');
+    removeClassDrag(document.getElementById('target-'+dragEnterId));
   }
   return false;
 }
@@ -382,7 +371,6 @@ for (i = 0;i < targets.length;i++) {
   if (!target.classList.contains('noedit')) {
     target.addEventListener('dragover', handleDragOver, false);
     target.addEventListener('dragenter', handleDragEnter, false);
-    target.addEventListener('dragleave', handleDragLeave, false);
     target.addEventListener('drop', handleDrop, false);
   }
 };
