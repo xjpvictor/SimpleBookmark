@@ -330,7 +330,7 @@ function handleDragStart(e) {
   this.innerHTML = document.getElementById('title-' + id).innerHTML;
 }
 function handleDragEnd(e) {
-  this.classList.remove('drag');
+  removeClassDrag(this);
   this.innerHTML = '';
 }
 var dragEnterId = 0;
@@ -360,7 +360,7 @@ function handleDrop(e) {
   if (dest != sour && dest.indexOf(sour + '_') !== 0) {
     window.location = '<?php echo $site_url; ?>index.php?action=move&id=' + sour + '&position=' + dest;
   } else {
-    this.classList.remove('drag');
+    removeClassDrag(this);
     removeClassDrag(document.getElementById('target-'+dragEnterId));
   }
   return false;
