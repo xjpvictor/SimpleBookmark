@@ -149,7 +149,7 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 #foot a:hover{color:#ca2017;}
 .move.drag,.move.touch{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
 .move.touch{position:absolute;z-index:9999;left:0;right:0;display:block;}
-.target.drag{padding-top:15px;border-top:2px dashed #999;}
+.target.drag{padding-top:15px;border-top:2px dashed #999;margin-top:0;}
 .target.touch{z-index:9999;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
@@ -364,11 +364,9 @@ function handleTouchMove(e) {
   if (touchOverElem !== targetParent) {
     if (touchOverElem)
       touchOverElem.classList.remove('drag');
-    if (targetParent) {
-      touchOverElem = targetParent;
-      if (touchOverElem) {
-        touchOverElem.classList.add('drag');
-      }
+    touchOverElem = targetParent;
+    if (touchOverElem) {
+      touchOverElem.classList.add('drag');
     }
   }
 }
