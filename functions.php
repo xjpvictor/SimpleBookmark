@@ -53,7 +53,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
         if (!isset($entry['hash']))
           $entry['hash'] = sha1($entry['url']);
         if ($deduplicate && is_array($deduplicate) && isset($deduplicate[$entry['hash']]))
-          $entry = delete_bookmark('_'.$entry['id'], 0, $bookmark_json);
+          $entry = delete_bookmark(($level ? $level : 0).'_'.$entry['id'], 0, $bookmark_json);
         else  {
           if (is_array($deduplicate))
             $deduplicate[$entry['hash']] = 1;
@@ -63,10 +63,10 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
             $entry['name'] = $entry['url'];
           $output['url'] .= '<!-- url '.$entry['id'].' in '.($level ? $level : '0').' -->
 <p class="entry url" style="display:block;"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').'>
-<span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border">
-<a class="url'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
+<a class="url'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 '.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 </span>
 </span>
@@ -85,8 +85,8 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <div class="folder"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="entry"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;">
 <h3 class="folder_title" style="display:block;">
-<span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
-<span class="folder_title_name"'.($allow_edit ? ' onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
+<span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
+<span class="folder_title_name touchOver"'.($allow_edit ? ' onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
 <span class="move"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true" onclick="toggleShow(\'folder-wrap-'.$level.'_'.$entry['id'].'\');"' : '').'></span>
 '.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
 <a class="bookmarklet" href="javascript:var url=\''.$site_url.'\';var x=document.createElement(\'SCRIPT\');x.type=\'text/javascript\';x.src=url+\'bookmarklet.php?d='.$level.'_'.$entry['id'].'\';document.getElementsByTagName(\'head\')[0].appendChild(x);void(0);" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Add to '.htmlentities($entry['name']).'</a>
@@ -113,7 +113,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
           $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
           $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $bookmark_json, $output, $level.'_'.$entry['id']);
-        $output['url'] .= '</span><span class="target'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
+        $output['url'] .= '</span><span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
       }
     }
   }

@@ -147,8 +147,10 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 #foot p{color:#666;}
 #foot a{color:#666;}
 #foot a:hover{color:#ca2017;}
-.move.drag{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
+.move.drag,.move.touch{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
+.move.touch{position:absolute;z-index:9999;left:0;right:0;display:block;}
 .target.drag{padding-top:15px;border-top:2px dashed #999;}
+.target.touch{z-index:9999;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
 .import-form{display:inline-block;}
@@ -185,7 +187,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  //$cache = 0;
+  $cache = 0;
 
   $cache_file_synclist = $cache_dir.'sync.html';
   if ($cache && file_exists($cache_file_synclist) && file_exists($sync_json) && filemtime($cache_file_synclist) >= filemtime($sync_json))
@@ -242,7 +244,7 @@ if (!$auth) {
   echo '<div id="content"><div id="folder-wrap">'."\n";
   echo '<div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
   echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+encodeURIComponent(window.location);window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
-  echo '##SYNCLIST##';
+  echo (isset($cache) && $cache ? '##SYNCLIST##' : $sync_output);
   echo '</div>'."\n";
 
   echo '<div id="bookmarks"><h2 class="cat">My Bookmarks</h2>'."\n";
@@ -322,6 +324,74 @@ var moveId;
 function removeClassDrag(ele) {
   ele.classList.remove('drag');
 }
+var touchScrollTimer, touchOverElem = false;
+function handleTouchStart(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  var elem = e.target;
+  var id = elem.getAttribute('data-id');
+  var parentElem = document.getElementById('target-' + id);
+  elem.classList.add('touch');
+  elem.style.top = e.touches[0].pageY - parentElem.offsetTop + 'px';
+  parentElem.classList.add('touch');
+  elem.innerHTML = document.getElementById('title-' + id).innerHTML;
+}
+function handleTouchMove(e) {
+  var elem = e.target;
+  var id = elem.getAttribute('data-id');
+  var parentElem = document.getElementById('target-' + id);
+  elem.style.top = e.touches[0].pageY - parentElem.offsetTop + 'px';
+  if (e.touches[0].clientY >= window.innerHeight - 30) {
+    clearInterval(touchScrollTimer);
+    touchScrollTimer = setInterval(function(){window.scrollBy(0, 5);}, 5);
+  } else if (e.touches[0].clientY <= 30) {
+    clearInterval(touchScrollTimer);
+    touchScrollTimer = setInterval(function(){window.scrollBy(0, -5);}, 5);
+  } else {
+    clearInterval(touchScrollTimer);
+  }
+  var targetElem = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY - 1);
+  if (targetElem.classList.contains('touchOver')) {
+    if (targetElem.getAttribute('data-id') !== id) {
+      var targetParent = document.getElementById('target-' + targetElem.getAttribute('data-id'));
+    } else {
+      var targetParent = false;
+    }
+  } else {
+    var targetParent = false;
+  }
+  if (touchOverElem !== targetParent) {
+    if (touchOverElem)
+      touchOverElem.classList.remove('drag');
+    if (targetParent) {
+      touchOverElem = targetParent;
+      if (touchOverElem) {
+        touchOverElem.classList.add('drag');
+      }
+    }
+  }
+}
+function handleTouchEnd(e) {
+  clearInterval(touchScrollTimer);
+  var elem = e.target;
+  var id = elem.getAttribute('data-id');
+  var parentElem = document.getElementById('target-' + id);
+  elem.classList.remove('touch');
+  elem.style.top = '0px';
+  parentElem.classList.remove('touch');
+  elem.innerHTML = '';
+  if (touchOverElem) {
+    touchOverElem.classList.remove('drag');
+    touchOverElem = false;
+  }
+  var targetElem = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  if (targetElem.classList.contains('touchOver')) {
+    if (targetElem.getAttribute('data-id') !== id) {
+      window.location = '<?php echo $site_url; ?>index.php?action=move&id=' + id + '&position=' + targetElem.getAttribute('data-id');
+    }
+  }
+}
 function handleDragStart(e) {
   id = this.getAttribute('data-id');
   moveId = id;
@@ -379,6 +449,9 @@ for (i=0;i<moves.length;i++) {
   var move=moves[i];
   move.addEventListener('dragstart', handleDragStart, false);
   move.addEventListener('dragend', handleDragEnd, false);
+  move.addEventListener('touchstart', handleTouchStart, false);
+  move.addEventListener('touchmove', handleTouchMove, false);
+  move.addEventListener('touchend', handleTouchEnd, false);
 };
 function getStr(event) {
   if (event.keyCode === 27) {
