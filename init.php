@@ -11,6 +11,7 @@ if (!function_exists('password_hash'))
 
 $bookmark_json = $data_dir.'bookmarks.json';
 $sync_json = $data_dir.'sync.json';
+$content_dir = $data_dir.'contents/';
 $cache_dir = __DIR__ . '/cache/';
 
 if (@filemtime($config_file) && function_exists('opcache_invalidate'))

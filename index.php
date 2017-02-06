@@ -40,6 +40,26 @@ if ($auth) {
         }
       }
       break;
+    case 'view':
+      if (isset($_GET['id']) && $_GET['id'] && file_exists($content_dir.$_GET['id'])) {
+        header('Content-Type: '.urldecode($_GET['type']));
+        readfile($content_dir.$_GET['id']);
+        exit;
+      }
+      break;
+    case 'save':
+      if (isset($_GET['id']) && $_GET['id']) {
+        if (isset($_GET['delete']) && $_GET['delete']) {
+          if (file_exists($content_dir.$_GET['id'].'-'.$_GET['delete']))
+            unlink($content_dir.$_GET['id'].'-'.$_GET['delete']);
+          $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
+        } else {
+          if (isset($_GET['url']) && ($url = urldecode($_GET['url'])) && ($file = download_item($_GET['id'], $url)))
+            $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file)), $bookmark_json);
+        }
+        $anchor = $_GET['level'].'_'.$_GET['id'];
+      }
+      break;
     case 'edit':
       if (isset($_GET['id']) && $_GET['id']) {
         $update = array('name' => $_POST['n']);
@@ -115,10 +135,11 @@ body,#main{padding:0;margin:0;}
 #advance{display:inline-block;padding:0;margin:0;}
 #content{padding:60px 10px 10px;}
 .entry:before{display:block;content:" ";margin-top:-70px;height:70px;visibility:hidden;}
-a.edit,a.delete{margin-left:5px;font-weight:normal;}
-a.edit{color:#666;}
+a.edit,a.delete,a.save,a.cancel,a.offline{margin-left:5px;font-weight:normal;}
+a.edit,a.save,a.cancel{color:#666;}
 a.delete{color:red;}
 a.delete.noedit{color:#666;}
+a.offline{background:#d42;color:#fff;padding:2px 5px;border-radius:2px;}
 a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:10px 0 0 10px;color:#666;text-decoration:none;background-color:#eee;border-radius:3px;border:none;font-size:0.9em;cursor:move;font-weight:normal;display:inline-block;}
 #addform-more a.bookmarklet{margin-left:0;margin-bottom:10px;}
 #addform form #addform-url-title input[type="text"]{width:40%;}
@@ -126,9 +147,9 @@ h2.cat{margin:20px 10px 0px 0;display:inline-block;}
 #sync h2.cat{margin:20px 0 10px;}
 #sync{margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid #000;}
 #sync a.bookmarklet{margin-top:17px;vertical-align:top;}
-.save select{margin-left:5px;}
-.save select:hover{cursor:pointer;}
-.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background:transparent;-webkit-appearance:none;padding:0;}
+form.save select{margin-left:5px;}
+form.save select:hover{cursor:pointer;}
+form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background:transparent;-webkit-appearance:none;padding:0;}
 .folder{border-bottom:1px solid #444;margin-top:1em;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
@@ -196,7 +217,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  //$cache = 0;
+  $cache = 0;
 
   $cache_file_folderlist = $cache_dir.'folders.html';
   if ($cache && file_exists($cache_file_folderlist) && filemtime($cache_file_folderlist) >= filemtime($bookmark_json)) {
