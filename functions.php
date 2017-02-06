@@ -62,15 +62,21 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
           if (!isset($entry['name']) || $entry['name'] == '')
             $entry['name'] = $entry['url'];
           $output['url'] .= '<!-- url '.$entry['id'].' in '.($level ? $level : '0').' -->
+'.(!$allow_edit ? '<form class="save" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=add" method="post">
+<input type="hidden" name="u" value="'.htmlentities($entry['url']).'">
+<input type="hidden" name="t" value="sync">
+<input type="hidden" name="n" value="'.($entry['name'] == $entry['url'] ? '' : htmlentities($entry['name'])).'">' : '').'
 <p class="entry url" style="display:block;"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
 <a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 '.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
+'.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
 </span>
 </p>
+'.(!$allow_edit ? '</form>' : '').'
 '.($allow_edit ? '<form class="editform" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
 <input name="u" type="text" required value="'.htmlentities($entry['url']).'"><br/>

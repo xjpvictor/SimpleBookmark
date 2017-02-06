@@ -10,7 +10,13 @@ if ($auth) {
       break;
     case 'add':
       if (isset($_POST['u']) && $_POST['u']) {
-        $entry = add_bookmark($_POST['u'], $_POST['d'], $_POST['t'], $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
+        if ($_POST['t'] == 'sync') {
+          parse_str(parse_url($_POST['u'], PHP_URL_QUERY), $u);
+          $_POST['u'] = $u['u'];
+          if (isset($u['id']) && $u['id'])
+            delete_bookmark($u['id'], 0, $sync_json);
+        }
+        $entry = add_bookmark($_POST['u'], $_POST['d'], ($_POST['t'] == 'sync' ? 'url' : $_POST['t']), $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
         $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
       }
       break;
@@ -120,6 +126,9 @@ h2.cat{margin:20px 10px 0px 0;display:inline-block;}
 #sync h2.cat{margin:20px 0 10px;}
 #sync{margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid #000;}
 #sync a.bookmarklet{margin-top:17px;vertical-align:top;}
+.save select{margin-left:5px;}
+.save select:hover{cursor:pointer;}
+.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background:transparent;-webkit-appearance:none;padding:0;}
 .folder{border-bottom:1px solid #444;margin-top:1em;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
@@ -189,6 +198,16 @@ if (!$auth) {
   $cache = true;
   $cache = 0;
 
+  $cache_file_folderlist = $cache_dir.'folders.html';
+  if ($cache && file_exists($cache_file_folderlist) && filemtime($cache_file_folderlist) >= filemtime($bookmark_json)) {
+    $folders = file_get_contents($cache_file_folderlist);
+  } else {
+    $bookmarks = parse_bookmark_json($bookmark_json);
+    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
+    $folders = $output['folder'];
+    file_put_contents($cache_file_folderlist, $folders);
+  }
+
   $cache_file_synclist = $cache_dir.'sync.html';
   if ($cache && file_exists($cache_file_synclist) && file_exists($sync_json) && filemtime($cache_file_synclist) >= filemtime($sync_json))
     $sync_output = file_get_contents($cache_file_synclist);
@@ -201,6 +220,7 @@ if (!$auth) {
       $sync_output = '';
     file_put_contents($cache_file_synclist, $sync_output);
   }
+  $sync_output = str_replace('##FOLDERLIST##', $folders, $sync_output);
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
@@ -211,8 +231,10 @@ if (!$auth) {
   ob_start();
 
   // Parse bookmark json
-  $bookmarks = parse_bookmark_json($bookmark_json);
-  $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
+  if (!isset($output)) {
+    $bookmarks = parse_bookmark_json($bookmark_json);
+    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
+  }
 
   // Show add bookmark box
   echo '<div id="addform">'."\n";
