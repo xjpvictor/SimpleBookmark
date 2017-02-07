@@ -73,7 +73,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
 <a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
-'.($allow_edit ? (isset($entry['meta']['downloadable']) && $entry['meta']['downloadable'] && isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'">View cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
+'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'">View cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
 </span>
@@ -86,7 +86,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>
-'.'<a class="save" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url']).(isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 ? '&delete='.$entry['meta']['offline'].'">Delete Cache' : '">Enable Cache').'</a>
+'.(!isset($entry['meta']['downloadable']) || $entry['meta']['downloadable'] ? '<a class="save" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url']).(isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 ? '&delete='.$entry['meta']['offline'].'">Delete Cache' : '">Enable Cache').'</a>' : '').'
 <br/>
 </form>' : '')."\n";
         }
@@ -163,7 +163,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
         $name = (isset($title[1]) ? toutf8($title[1]) : '');
       }
       if (!isset($name) || !$name) {
-        if ($header['content_type'] == 'text/plain' || substr($header['content_type'], 0, 6) == 'image/')
+        if ($header['downloadable'])
           $name = substr($url, strrpos($url, '/') + 1, 140);
         else
           $name = substr($url, 0, 140);
@@ -183,8 +183,8 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
         'http_code' => $header['http_code'],
         'last_access' => time(),
         'content_type' => $header['content_type'],
-        'downloadable' => ($header['content_type'] == 'text/plain' || substr($header['content_type'], 0, 6) == 'image/' ? 1 : 0),
         'offline' => '',
+        'downloadable' => $header['downloadable']
       );
     }
   } else
@@ -192,7 +192,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 
   $data = $new['_'.$id];
   if ($folder) {
-    if ($type == 'url' && !$redirect && $new['_'.$id]['meta']['downloadable']) {
+    if ($type == 'url' && !$redirect && $header['downloadable']) {
       $parent = $bookmark[0];
       $levels = explode('_', substr($folder, 1));
       foreach ($levels as $level) {
@@ -359,11 +359,16 @@ function get_url_response($url, $nobody = 0) {
   $header = array(
     'header_size' => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
     'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? $ct : '')
+    'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? strtolower($ct) : '')
   );
   $header['header'] = substr($response, 0, $header['header_size']);
   $body = (!$nobody ? substr($response, $header['header_size']) : '');
   curl_close($ch);
+
+  if ($header['content_type'] && (substr($header['content_type'], 0, 6) == 'image/' || substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
+    $header['downloadable'] = 1;
+  else
+    $header['downloadable'] = 0;
 
   return array('header' => $header, 'body' => $body);
 }
@@ -378,6 +383,9 @@ function download_item($id, $url) {
   if ($header['http_code'] !== 200)
     return false;
 
+  if (!$header['downloadable'])
+    return array('file_name' => '', 'header' => $header, 'downloadable' => 0);
+
   $fp = fopen(($file = $cache_dir.time()), 'w+');
 
   $ch = curl_init();
@@ -390,20 +398,17 @@ function download_item($id, $url) {
   curl_close($ch);
   fclose($fp);
 
-  if ($header['content_type'] == 'text/plain' || substr($header['content_type'], 0, 6) == 'image/') {
-    if (filesize($file)) {
-      rename($file, $content_dir.$id.'-'.($file_name = sha1($file).'-'.filesize($file)));
-      return array('file_name' => $file_name, 'header' => $header, 'body' => '', 'downloadable' => 1);
-    } else {
-      if (file_exists($file))
-        unlink($file);
-      return array('file_name' => '', 'header' => $header, 'body' => '', 'downloadable' => 1);
-    }
+  if ($header['content_type'] && substr($header['content_type'], 0, 9) == 'text/html') {
+    // readability
+  }
+
+  if (filesize($file)) {
+    rename($file, $content_dir.$id.'-'.($file_name = sha1($file).'-'.filesize($file)));
+    return array('file_name' => $file_name, 'header' => $header);
   } else {
-    $data = array('file_name' => '', 'header' => $header, 'body' => (file_exists($file) ? file_get_contents($file) : ''), 'downloadable' => 0);
     if (file_exists($file))
       unlink($file);
-    return $data;
+    return array('file_name' => '', 'header' => $header);
   }
 }
 ?>
