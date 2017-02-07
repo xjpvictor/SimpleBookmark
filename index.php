@@ -16,8 +16,16 @@ if ($auth) {
           if (isset($u['id']) && $u['id'])
             delete_bookmark($u['id'], 0, $sync_json);
         }
+
         $entry = add_bookmark($_POST['u'], $_POST['d'], ($_POST['t'] == 'sync' ? 'url' : $_POST['t']), $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
-        $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
+
+        if (isset($entry['meta']['offline']) && $entry['meta']['offline'] == -1 && ($file = download_item($entry['id'], $entry['url'])))
+          $entry = update_bookmark($_POST['d'].'_'.$entry['id'], array('meta' => array('offline' => $file)), $bookmark_json);
+
+        if ($_POST['t'] == 'sync')
+          $anchor = 'sync';
+        else
+          $anchor = ($_POST['d'] == '_0' ? '' : $_POST['d']).'_'.$entry['id'];
       }
       break;
     case 'delete':
@@ -26,6 +34,8 @@ if ($auth) {
           $entry = delete_bookmark($_GET['id'], 0, $sync_json);
         } else {
           $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
+          if (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && file_exists($content_dir.$entry['id'].'-'.$entry['meta']['offline']))
+            unlink($content_dir.$entry['id'].'-'.$entry['meta']['offline']);
           $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
         }
       }
@@ -65,12 +75,15 @@ if ($auth) {
         $update = array('name' => $_POST['n']);
         if (isset($_POST['u']))
           $update['url'] = $_POST['u'];
+        if (isset($_POST['c']))
+          $update['cache'] = $_POST['c'];
         $entry = update_bookmark($_GET['id'], $update, $bookmark_json);
-        if (isset($_POST['l']) && $_POST['l'] !== substr($_GET['id'], 0, strrpos($_GET['id'], '_'))) {
+        $l = ($_POST['l'] == '_0' ? '' : $_POST['l']);
+        if (isset($_POST['l']) && $l.'_'.$entry['id'] !== $_GET['id']) {
           $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
-          move_bookmark($entry, $_POST['l'].'_0', $bookmark_json);
+          move_bookmark($entry, $l.'_0', $bookmark_json);
         }
-        $anchor = $_POST['l'].'_'.$entry['id'];
+        $anchor = $l.'_'.$entry['id'];
       }
       break;
     case 'move':
@@ -123,7 +136,7 @@ h3,.folder_title_name{font-size:16px;margin:0 0 1em;font-weight:bold;}
 a {color:#0000cc;text-decoration:none;}
 a:visited{color:#0000cc;}
 a:hover{color:red;}
-input[type="submit"]:hover{cursor:pointer;}
+input[type="submit"]:hover,label:hover{cursor:pointer;}
 body,#main{padding:0;margin:0;}
 #wrap{padding:0 10px;}
 #logout{float:right;padding-right:10px;}
@@ -139,7 +152,7 @@ a.edit,a.delete,a.save,a.cancel,a.offline{margin-left:5px;font-weight:normal;}
 a.edit,a.save,a.cancel{color:#666;}
 a.delete{color:red;}
 a.delete.noedit{color:#666;}
-a.offline{background:#d42;color:#fff;padding:2px 5px;border-radius:2px;}
+a.offline{background:#4caf50;color:#fff;padding:2px 5px 0;border-radius:2px;display:inline-block;font-size:0.9em;line-height:21px;}
 a.bookmarklet,a.bookmarklet:visited,a.bookmarklet:hover{padding:3px 7px;margin:10px 0 0 10px;color:#666;text-decoration:none;background-color:#eee;border-radius:3px;border:none;font-size:0.9em;cursor:move;font-weight:normal;display:inline-block;}
 #addform-more a.bookmarklet{margin-left:0;margin-bottom:10px;}
 #addform form #addform-url-title input[type="text"]{width:40%;}
@@ -154,6 +167,7 @@ form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
 .folder_title_name{cursor:pointer;}
+.folder_title span.cache{background:#4caf50;color:#fff;padding:3px 7px;margin-left:10px;border-radius:2px;display:inline-block;font-size:0.9em;font-weight:normal;}
 .url .border{padding-left:8px;border-left:3px solid #666;display:block;}
 .target{position:relative;z-index:5;display:block;}
 .url .target{margin-left:3px;}
@@ -285,7 +299,7 @@ if (!$auth) {
 
   // Show bookmarks
   echo '<div id="content"><div id="folder-wrap">'."\n";
-  echo '<div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
+  echo '<span class="entry" id="entry-sync"></span><div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
   echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+encodeURIComponent(window.location);window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
   echo (isset($cache) && $cache ? '##SYNCLIST##' : $sync_output);
   echo '</div>'."\n";
