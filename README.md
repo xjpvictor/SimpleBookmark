@@ -29,7 +29,7 @@ This is a simple web-based bookmark manager written in PHP
 
 * PHP >= 5.5.3
 
-* Optional IMAP extensions
+* Optional IMAP, GD, TIDY extensions
 
 * Copy `config.php-dist` to `data/config.php` and edit accordingly to setup
 
