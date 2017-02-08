@@ -410,6 +410,7 @@ window.addEventListener("scroll", notRobot);
 window.addEventListener("mousemove", notRobot);
 window.addEventListener("mousedown", notRobot);
 window.addEventListener("keydown", notRobot);
+
 function toggleShow(id) {
   var bb = document.getElementById(id);
   if (bb.style.display == "block") {
@@ -422,6 +423,7 @@ var moveId;
 function removeClassDrag(ele) {
   ele.classList.remove('drag');
 }
+// Touch to Drag
 var touchScrollTimer, touchOverElem = false;
 function handleTouchStart(e) {
   if (e.preventDefault) {
@@ -488,6 +490,8 @@ function handleTouchEnd(e) {
     }
   }
 }
+// Drag and Drop
+var dragEnterId = 0;
 function handleDragStart(e) {
   id = this.getAttribute('data-id');
   moveId = id;
@@ -498,8 +502,9 @@ function handleDragStart(e) {
 function handleDragEnd(e) {
   removeClassDrag(this);
   this.innerHTML = '';
+  if (dragEnterId)
+    removeClassDrag(document.getElementById('target-'+dragEnterId));
 }
-var dragEnterId = 0;
 function handleDragEnter(e) {
   var i=this.getAttribute('data-id');
   if (i !== moveId) {
@@ -527,7 +532,6 @@ function handleDrop(e) {
     window.location = '<?php echo $site_url; ?>index.php?action=move&id=' + sour + '&position=' + dest;
   } else {
     removeClassDrag(this);
-    removeClassDrag(document.getElementById('target-'+dragEnterId));
   }
   return false;
 }
@@ -549,6 +553,7 @@ for (i=0;i<moves.length;i++) {
   move.addEventListener('touchmove', handleTouchMove, false);
   move.addEventListener('touchend', handleTouchEnd, false);
 };
+// Search
 function getStr(event) {
   if (event.keyCode === 27) {
     document.getElementById('search').blur();
