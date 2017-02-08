@@ -79,7 +79,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
 <a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
-'.((isset($entry['preview']) && ($r = $entry['preview'])) || in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif')) ? '<span class="preview"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
+'.((isset($entry['meta']['preview']) && ($r = $entry['meta']['preview'])) || in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif')) ? '<span class="preview"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
 <span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 '.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
@@ -167,8 +167,8 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 
     if (!isset($name) || !$name) {
       if ($header['http_code'] == 200 && strlen($body)) {
-        preg_match('/\<title\>(.*)\<\/title\>/i', $body, $title);
-        $name = (isset($title[1]) ? toutf8($title[1]) : '');
+        preg_match('/\<title\>(.*)\<\/title\>/si', $body, $title);
+        $name = trim((isset($title[1]) ? toutf8($title[1]) : ''));
       }
       if (!isset($name) || !$name) {
         if ($header['downloadable'])
@@ -398,6 +398,11 @@ function get_url_response($url, $nobody = 0) {
   if ($header['content_type'] && substr($header['content_type'], 0, 6) == 'image/') {
     $header['downloadable'] = 1;
     $header['preview'] = $url;
+  } elseif ($header['content_type'] && $header['content_type'] == 'text/html') {
+    $header['downloadable'] = 1;
+    if ($body && (preg_match('/<meta\s+([^>]*\s+)?property\s*=\s*("|\')og:image("|\')\s+([^>]*\s+)?content\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches) || preg_match('/<meta\s+([^>]*\s+)?name\s*=\s*("|\')twitter:image("|\')\s+([^>]*\s+)?content\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches) || preg_match('/<link\s+([^>]*\s+)?rel\s*=\s*("|\')image_src("|\')\s+([^>]*\s+)?href\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches))) {
+      $header['preview'] = trim((isset($matches[6]) ? $matches[6] : $header['preview']));
+    }
   } elseif ($header['content_type'] && (substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
     $header['downloadable'] = 1;
 
