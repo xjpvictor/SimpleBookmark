@@ -560,7 +560,6 @@ function dragScrollFunc() {
     dragScroll = 1;
   }
 }
-document.getElementById('addform').addEventListener('dragenter', dragScrollFunc, false);
 document.getElementById('addform').addEventListener('dragover', dragScrollFunc, false);
 document.getElementById('addform').addEventListener('dragleave', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 document.getElementById('addform').addEventListener('drop', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
