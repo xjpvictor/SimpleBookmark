@@ -139,7 +139,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
   return $output;
 }
 
-function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 0) {
+function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1) {
   $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json);
 
   $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
