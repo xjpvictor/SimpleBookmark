@@ -81,7 +81,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
 '.((isset($entry['preview']) && $entry['preview']) || in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif')) ? '<span class="preview"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
 <span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
-'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
+'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
 </span>
@@ -94,7 +94,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>
-'.(!isset($entry['meta']['downloadable']) || $entry['meta']['downloadable'] ? '<a class="save" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url']).(isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 ? '&delete='.$entry['meta']['offline'].'">Delete Cache' : '">Enable Cache').'</a>' : '').'
+'.(!isset($entry['meta']['downloadable']) || $entry['meta']['downloadable'] ? '<a class="save" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url']).(isset($entry['meta']['offline']) && $entry['meta']['offline'] ? '&delete='.$entry['meta']['offline'].'">Delete Cache' : '">Enable Cache').'</a>' : '').'
 <br/>
 </form>' : '')."\n";
         }
@@ -209,8 +209,10 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
           $parent = $parent['entries']['_'.$level];
       }
       if (isset($parent['cache']) && $parent['cache']) {
-        $new['_'.$id]['meta']['offline'] = -1;
-        $data['meta']['offline'] = -1;
+        if ($file = download_item($id, $url)) {
+          $new['_'.$id]['meta']['offline'] = $file['file_name'];
+          $data = $new['_'.$id];
+        }
       }
     }
 

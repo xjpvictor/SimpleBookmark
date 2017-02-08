@@ -19,9 +19,6 @@ if ($auth) {
 
         $entry = add_bookmark($_POST['u'], $_POST['d'], ($_POST['t'] == 'sync' ? 'url' : $_POST['t']), $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
 
-        if (isset($entry['meta']['offline']) && $entry['meta']['offline'] == -1 && ($file = download_item($entry['id'], $entry['url'])))
-          $entry = update_bookmark($_POST['d'].'_'.$entry['id'], array('meta' => array('offline' => $file['file_name'])), $bookmark_json);
-
         if ($_POST['t'] == 'sync')
           $anchor = 'sync';
         else
