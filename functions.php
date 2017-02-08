@@ -468,7 +468,7 @@ function download_item($id, $url) {
     $body = preg_replace(array('/<a [^>]*href=\'\'[^>]*>[^<]*<\/a>/i', '/<a [^>]*href=""[^>]*>[^<]*<\/a>/i', '/<a( [^>]*)?>[\r\n\s]*<\/a>/i', '/<td( [^>]*)?>[\r\n\s]*<\/td>/i', '/<tr( [^>]*)?>[\r\n\s]*<\/tr>/i', '/<table( [^>]*)?>[\r\n\s]*<\/table>/i'), '', $body); //remove white spaces
     $body = preg_replace(array('/\s*[\r\n]+/'), "\n", $body); //remove white spaces
 
-    $body = '<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>'.(isset($title) && $title ? $title : '').'</title><link rel="profile" href="http://gmpg.org/xfn/11" /><link rel="shortcut icon" href="/favicon.ico" />
+    $body = '<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>'.(isset($title) && $title ? $title : '').'</title><link rel="profile" href="http://gmpg.org/xfn/11" /><link rel="shortcut icon" href="favicon.ico" />
 <style type="text/css" media="all">
 <!--
 html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
