@@ -51,7 +51,7 @@ function parse_bookmark_json($bookmark_json) {
 }
 
 function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json, $output = array('url' => '', 'folder' => ''), $level = '') {
-  global $site_url;
+  global $site_url, $sync_file_prefix;
 
   foreach ($bookmarks as $bookmark_id => $entry) {
     if (isset($entry['id'])) {
@@ -78,7 +78,9 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
-<a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
+<a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
+'.((isset($entry['preview']) && $entry['preview']) || in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif')) ? '<span class="preview"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
+<span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 '.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
@@ -178,20 +180,21 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
   }
 
   $hash = sha1($url);
-  if ($type == 'url' && $redirect)
-    $url = $site_url.'index.php?action=redirect&u='.urlencode($url).'&id=_'.$id;
 
   $new = array('_'.$id => array('id' => $id, 'type' => $type, 'name' => ($type == 'url' ? $name : $url), 'date_added' => time(), 'hash' => $hash));
   if ($type == 'url') {
     $new['_'.$id]['url'] = $url;
-    if (!$redirect) {
-      $new['_'.$id]['meta'] = array(
-        'http_code' => $header['http_code'],
-        'last_access' => time(),
-        'content_type' => $header['content_type'],
-        'offline' => '',
-        'downloadable' => $header['downloadable']
-      );
+    $new['_'.$id]['meta'] = array(
+      'http_code' => $header['http_code'],
+      'last_access' => time(),
+      'content_type' => $header['content_type'],
+      'offline' => '',
+      'downloadable' => $header['downloadable'],
+      'preview' => $header['preview'],
+    );
+    if ($redirect) {
+      $new['_'.$id]['url'] = $site_url.'index.php?action=redirect&u='.urlencode($url).'&id=_'.$id;
+      $new['_'.$id]['original_url'] = $url;
     }
   } else
     $new['_'.$id]['cache'] = 0;
@@ -226,6 +229,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
   if ($type == 'folder')
     move_bookmark($data, ($folder !== '_0' ? $folder : '').'_-1', $bookmark_json);
+
   return $data;
 }
 
@@ -240,7 +244,9 @@ function update_bookmark_recursive($bookmark, $levels, $index, $callback_functio
   return $data;
 }
 
-function delete_bookmark($id, $delete_contents, $bookmark_json) {
+function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = '') {
+  global $content_dir, $cache_dir, $preview_filename_prefix;
+
   $bookmark = parse_bookmark_json($bookmark_json);
   $levels = explode('_', substr($id, 1));
   $id = array_pop($levels);
@@ -249,6 +255,20 @@ function delete_bookmark($id, $delete_contents, $bookmark_json) {
   if (isset($data[2]) && !empty($data[2]))
     $bookmark[0]['entries'] = array_merge($bookmark[0]['entries'], $data[2]);
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
+  $files = glob($content_dir.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
+  if ($files) {
+    foreach ($files as $file) {
+      if (file_exists($file))
+        unlink($file);
+    }
+  }
+  $files = glob($cache_dir.$preview_filename_prefix.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
+  if ($files) {
+    foreach ($files as $file) {
+      if (file_exists($file))
+        unlink($file);
+    }
+  }
   return $data[1];
 }
 
@@ -371,10 +391,13 @@ function get_url_response($url, $nobody = 0) {
   $body = (!$nobody ? substr($response, $header['header_size']) : '');
   curl_close($ch);
 
-  if ($header['content_type'] && (substr($header['content_type'], 0, 6) == 'image/' || substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
+  $header['downloadable'] = 0;
+  $header['preview'] = 0;
+  if ($header['content_type'] && substr($header['content_type'], 0, 6) == 'image/') {
     $header['downloadable'] = 1;
-  else
-    $header['downloadable'] = 0;
+    $header['preview'] = 1;
+  } elseif ($header['content_type'] && (substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
+    $header['downloadable'] = 1;
 
   return array('header' => $header, 'body' => $body);
 }
@@ -390,7 +413,7 @@ function download_item($id, $url) {
     return false;
 
   if (!$header['downloadable'])
-    return array('file_name' => '', 'header' => $header, 'downloadable' => 0);
+    return array('file_name' => '', 'header' => $header);
 
   $fp = fopen(($file = $cache_dir.time()), 'w+');
 
@@ -469,5 +492,101 @@ h1{font-size:2em;line-height:1.2em;}
       unlink($file);
     return array('file_name' => '', 'header' => $header);
   }
+}
+
+function imagecreatefrombmp($p_sFile) {
+  $file = fopen($p_sFile, "rb");
+  $read = fread($file, 10);
+  while (!feof($file) && ($read<>""))
+    $read .= fread($file, 1024);
+  $temp = unpack("H*", $read);
+  $hex = $temp[1];
+  $header = substr($hex, 0, 108);
+  if (substr($header, 0, 4) == "424d") {
+    $header_parts = str_split($header, 2);
+    $width = hexdec($header_parts[19].$header_parts[18]);
+    $height = hexdec($header_parts[23].$header_parts[22]);
+    unset($header_parts);
+  }
+  $x = 0;
+  $y = 1;
+  $image = imagecreatetruecolor($width, $height);
+  $body = substr($hex, 108);
+  $body_size = (strlen($body) / 2);
+  $header_size = ($width * $height);
+  $usePadding = ($body_size > ($header_size * 3) + 4);
+  for ($i = 0; $i < $body_size; $i += 3) {
+    if ($x >= $width) {
+      if ($usePadding)
+        $i += $width % 4;
+      $x = 0;
+      $y++;
+      if ($y > $height)
+        break;
+    }
+    $i_pos = $i * 2;
+    $r = hexdec($body[$i_pos + 4].$body[$i_pos + 5]);
+    $g = hexdec($body[$i_pos + 2].$body[$i_pos + 3]);
+    $b = hexdec($body[$i_pos].$body[$i_pos + 1]);
+    $color = imagecolorallocate($image, $r, $g, $b);
+    imagesetpixel($image, $x, $height - $y, $color);
+    $x++;
+  }
+  unset($body);
+  return $image;
+}
+
+function createthumbnail($source_file, $height) {
+  $size = getimagesize($source_file);
+  $w = $size[0];
+  $h = $size[1];
+  $type=$size['mime'];
+  $stype = explode("/", $type);
+  $stype = $stype[count($stype)-1];
+  switch($stype) {
+  case 'gif':
+    $simg = imagecreatefromgif($source_file);
+    break;
+  case 'jpeg':
+    $simg = imagecreatefromjpeg($source_file);
+    break;
+  case 'tiff':
+    break;
+  case 'png':
+    $simg = imagecreatefrompng($source_file);
+    break;
+  case 'bmp':
+    $simg = imagecreatefrombmp($source_file);
+    break;
+  case 'x-ms-bmp':
+    $simg = imagecreatefrombmp($source_file);
+    break;
+  case 'vnd.wap.wbmp':
+    $simg = imagecreatefrombmp($source_file);
+    break;
+  }
+  if (!isset($simg) || !$simg)
+    return false;
+
+  $width = min($height, ($w / $h) * $height);
+  $wm = max($w, $width) / $width;
+  $hm = max($h, $height) / $height;
+  $adjusted_w = $w / min($hm, $wm);
+  $adjusted_h = $h / min($hm, $wm);
+  $half_height = $height / 2;
+  $half_width = $width / 2;
+  $half_w = $adjusted_w / 2;
+  $half_h = $adjusted_h / 2;
+  $int_w = $half_w - $half_width;
+  $int_h = $half_h - $half_height;
+
+  $dimg = imagecreatetruecolor($width, $height);
+  imagecopyresampled($dimg, $simg, -$int_w, -$int_h, 0, 0, $adjusted_w, $adjusted_h, $w, $h);
+
+  if ($dimg) {
+    imagejpeg($dimg, $source_file, 90);
+    return $source_file;
+  } else
+    return false;
 }
 ?>

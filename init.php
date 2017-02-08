@@ -14,6 +14,10 @@ $sync_json = $data_dir.'sync.json';
 $content_dir = $data_dir.'contents/';
 $lib_dir = __DIR__.'/lib/';
 $cache_dir = __DIR__ . '/cache/';
+$preview_filename_prefix = 'preview-';
+$preview_file_life = 7 * 86400;
+$preview_height = '20';
+$sync_file_prefix = 'sync-';
 
 if (@filemtime($config_file) && function_exists('opcache_invalidate'))
   opcache_invalidate($config_file,true);

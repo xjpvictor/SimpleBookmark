@@ -14,7 +14,7 @@ if ($auth) {
           parse_str(parse_url($_POST['u'], PHP_URL_QUERY), $u);
           $_POST['u'] = $u['u'];
           if (isset($u['id']) && $u['id'])
-            delete_bookmark($u['id'], 0, $sync_json);
+            delete_bookmark($u['id'], 0, $sync_json, $sync_file_prefix);
         }
 
         $entry = add_bookmark($_POST['u'], $_POST['d'], ($_POST['t'] == 'sync' ? 'url' : $_POST['t']), $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
@@ -34,13 +34,6 @@ if ($auth) {
           $entry = delete_bookmark($_GET['id'], 0, $sync_json);
         } else {
           $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
-          $files = glob($content_dir.$entry['id'].'-*', GLOB_NOSORT);
-          if ($files) {
-            foreach ($files as $file) {
-              if (file_exists($file))
-                unlink($file);
-            }
-          }
           $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
         }
       }
@@ -78,7 +71,7 @@ if ($auth) {
           $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
         } else {
           if (isset($_GET['url']) && ($url = urldecode($_GET['url'])) && ($file = download_item($_GET['id'], $url)))
-            $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('content_type' => $file['header']['content_type'], 'offline' => $file['file_name'], 'downloadable' => (isset($file['downloadable']) ? $file['downloadable'] : 1))), $bookmark_json);
+            $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('content_type' => $file['header']['content_type'], 'offline' => $file['file_name'], 'downloadable' => (isset($file['header']['downloadable']) ? $file['downloadable'] : 1), 'preview' => (isset($file['header']['preview']) ? $file['preview'] : 1))), $bookmark_json);
         }
         $anchor = $_GET['level'].'_'.$_GET['id'];
       }
@@ -115,6 +108,42 @@ if ($auth) {
     case 'export':
       header('Content-Type: text/plain');
       readfile($bookmark_json);
+      exit;
+    case 'preview':
+      if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
+        $preview_file = $cache_dir . $preview_filename_prefix . $_GET['id'] . '-' . sha1($url);
+        if (file_exists($preview_file) && time() - filemtime($preview_file) <= $preview_file_life) {
+          readfile($preview_file);
+        } else {
+          if (file_exists($preview_file))
+            unlink($preview_file);
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL, $url);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($ch, CURLOPT_HEADER, 1);
+          curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+          $response = curl_exec($ch);
+          $header = array(
+            'header_size' => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
+            'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
+            'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? strtolower($ct) : '')
+          );
+          $header['header'] = substr($response, 0, $header['header_size']);
+          $body = substr($response, $header['header_size']);
+          curl_close($ch);
+
+          if ($header['http_code'] == 200 && substr($header['content_type'], 0, 6) == 'image/' && $body) {
+            header('Content-Type: '.$header['content_type']);
+            file_put_contents($preview_file, $body);
+            if (extension_loaded('gd')) {
+              createthumbnail($preview_file, $preview_height);
+              readfile($preview_file);
+            } else
+              echo $body;
+          }
+        }
+      }
       exit;
     }
     header('Location: index.php'.(isset($anchor) && $anchor ? '#entry-'.$anchor : ''));
@@ -197,6 +226,8 @@ form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background
 .editform input[type="submit"]{margin:0 5px 0 0;padding:4px 5px 5px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
+.preview{width:20px;height:20px;display:inline-block;vertical-align:middle;text-align:center;overflow:hidden;margin-right:5px;}
+.preview img{height:20px;}
 #rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:transparent;height:60px;color:#fff;padding:0;margin:0;}
 #totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#000;text-align:center;padding:0;margin:0;display:inline-block;}
 #totop:hover,#tobottom:hover{color:#444;}
