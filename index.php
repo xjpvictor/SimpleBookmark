@@ -108,6 +108,7 @@ if ($auth) {
       exit;
     case 'preview':
       if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
+        header('Content-Type: image/jpeg');
         $preview_file = $cache_dir . $preview_filename_prefix . $_GET['id'] . '-' . sha1($url);
         if (file_exists($preview_file) && time() - filemtime($preview_file) <= $preview_file_life) {
           readfile($preview_file);
@@ -131,7 +132,6 @@ if ($auth) {
           curl_close($ch);
 
           if ($header['http_code'] == 200 && substr($header['content_type'], 0, 6) == 'image/' && $body) {
-            header('Content-Type: '.$header['content_type']);
             file_put_contents($preview_file, $body);
             if (extension_loaded('gd')) {
               createthumbnail($preview_file, $preview_height);
