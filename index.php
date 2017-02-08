@@ -553,6 +553,16 @@ for (i=0;i<moves.length;i++) {
   move.addEventListener('touchmove', handleTouchMove, false);
   move.addEventListener('touchend', handleTouchEnd, false);
 };
+var dragScrollTimer, dragScroll = 0;
+function dragScrollFunc() {
+  if (!dragScroll) {
+    dragScrollTimer = setInterval(function(){window.scrollBy(0, -5);}, 5);
+    dragScroll = 1;
+  }
+}
+document.getElementById('addform').addEventListener('dragenter', dragScrollFunc, false);
+document.getElementById('addform').addEventListener('dragover', dragScrollFunc, false);
+document.getElementById('addform').addEventListener('dragleave', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 // Search
 function getStr(event) {
   if (event.keyCode === 27) {
