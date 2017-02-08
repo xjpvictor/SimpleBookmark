@@ -34,8 +34,13 @@ if ($auth) {
           $entry = delete_bookmark($_GET['id'], 0, $sync_json);
         } else {
           $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
-          if (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && file_exists($content_dir.$entry['id'].'-'.$entry['meta']['offline']))
-            unlink($content_dir.$entry['id'].'-'.$entry['meta']['offline']);
+          $files = glob($content_dir.$entry['id'].'-*', GLOB_NOSORT);
+          if ($files) {
+            foreach ($files as $file) {
+              if (file_exists($file))
+                unlink($file);
+            }
+          }
           $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
         }
       }
@@ -52,7 +57,10 @@ if ($auth) {
       break;
     case 'view':
       if (isset($_GET['id']) && $_GET['id'] && file_exists($content_dir.$_GET['id'])) {
-        header('Content-Type: '.urldecode($_GET['type']));
+        $type = urldecode($_GET['type']);
+        if (($pos = strpos($type, ';')))
+          $type = substr($type, 0, $pos);
+        header('Content-Type: '.$type);
         readfile($content_dir.$_GET['id']);
         exit;
       }
@@ -60,8 +68,13 @@ if ($auth) {
     case 'save':
       if (isset($_GET['id']) && $_GET['id']) {
         if (isset($_GET['delete']) && $_GET['delete']) {
-          if (file_exists($content_dir.$_GET['id'].'-'.$_GET['delete']))
-            unlink($content_dir.$_GET['id'].'-'.$_GET['delete']);
+          $files = glob($content_dir.$_GET['id'].'-*', GLOB_NOSORT);
+          if ($files) {
+            foreach ($files as $file) {
+              if (file_exists($file))
+                unlink($file);
+            }
+          }
           $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
         } else {
           if (isset($_GET['url']) && ($url = urldecode($_GET['url'])) && ($file = download_item($_GET['id'], $url)))

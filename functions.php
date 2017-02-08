@@ -16,6 +16,12 @@ function toutf8($str) {
     return '';
 }
 
+function escattr($match) {
+  if (is_array($match))
+    $match = '<'.$match[1].(isset($match[6]) ? $match[6] : '').'>';
+  return preg_replace_callback('/<([^>]*\s+)?(on[^=]+|jsaction|data|data-[a-z]+|dynsrc|accesskey|tabindex|shape|srcset|alt|title)\s*=\s*(("[^"]*")|(\'[^\']*\'))?(\s+[^>]*\/?)?>/i', 'escattr', $match);
+}
+
 function auth($expire = null) {
   if (isset($expire))
     session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
@@ -73,7 +79,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
 <a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'"><span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
-'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'">View cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
+'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && $entry['meta']['offline'] !== -1 && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
 </span>
@@ -374,7 +380,7 @@ function get_url_response($url, $nobody = 0) {
 }
 
 function download_item($id, $url) {
-  global $content_dir, $cache_dir;
+  global $content_dir, $cache_dir, $lib_dir;
 
   // Update header
   $response = get_url_response($url, 1);
@@ -398,12 +404,65 @@ function download_item($id, $url) {
   curl_close($ch);
   fclose($fp);
 
-  if ($header['content_type'] && substr($header['content_type'], 0, 9) == 'text/html') {
+  if ($header['content_type'] && substr($header['content_type'], 0, 9) == 'text/html' && filesize($file)) {
     // readability
+    $body = toutf8(file_get_contents($file));
+    $body = preg_replace(array('/<!--.*?-->/si'), '', $body); //remove comments
+    $body = preg_replace(array('/<style.*?\/style>/si', '/<script.*?\/script>/si', '/<form.*?\/form>/si', '/<iframe.*?\/iframe>/si', '/<button.*?\/button>/si', '/<input [^>]*>/si', '/<textarea.*?\/textarea>/si', '/<noscript.*?\/noscript>/si', '/<select.*?\/select>/si', '/<option.*?\/option>/si', '/<object.*?\/object>/si', '/<applet.*?\/applet>/si', '/<basefont [^>]*>/si', '/<font.*?\/font>/si', '/<bgsound [^>]*>/si', '/<blink.*?\/blink>/si', '/<canvas.*?\/canvas>/si', '/<command.*?\/command>/si', '/<menu.*?\/menu>/si', '/<nav.*?\/nav>/si', '/<datalist.*?\/datalist>/si', '/<embed [^>]*>/si', '/<frame [^>]*>/si', '/<frameset.*?\/frameset>/si', '/<keygen [^>]*>/si', '/<label.*?\/label>/si', '/<marquee.*?\/marquee>/si', '/<ins.*?\/ins>/si'), '', $body); //remove element
+    $body = preg_replace(array('/<([a-z]+\s+)([^>]*)on[a-z]+=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)style=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)class=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)id=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)align=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)border=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)margin=\s*"[^">]+"(\s+[^>]*)?(\/\s*)?>/i'), '<$1$2$3$4>', $body); //remove inline-js and style
+    $body = preg_replace(array('/<([a-z]+\s+)([^>]*)on[a-z]+=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)style=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)class=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)id=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)align=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)border=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i', '/<([a-z]+\s+)([^>]*)margin=\s*\'[^\'>]+\'(\s+[^>]*)?(\/\s*)?>/i'), '<$1$2$3$4>', $body); //remove inline-js and style
+
+    if (extension_loaded('tidy')) {
+      $body_raw = $body;
+      $tidy = new tidy;
+      $body = $tidy->repairString($body);
+      if (!$body || !($tidy->parseString($body)) || !($tidy->cleanRepair()))
+        $body = $body_raw;
+      else
+        $body = $tidy;
+    }
+
+    require $lib_dir.'readability/config.inc.php';
+    require $lib_dir.'readability/common.inc.php';
+    require $lib_dir.'readability/Readability.inc.php';
+    include($lib_dir.'url_to_absolute.php');
+    $Readability = new Readability($body, 'utf8');
+    $ReadabilityData = $Readability->getContent();
+    $body = '<h1>'.$ReadabilityData['title'].'</h1>'.$ReadabilityData['content'];
+    $title = $ReadabilityData['title'];
+
+    $body = preg_replace(array('/<(!DOCTYPE |\/)?html[^>]*>/i', '/<\/?body[^>]*>/i', '/<head[^>]*>.*<\/head>/i', '/<\/?head[^>]*>/i', '/<title[^>]*>.*<\/title>/i', '/<\/?title[^>]*>/i', '/<meta[^>]*>/i', '/<link[^>]*>/i', '/<!--[^>]*-->/i'), '', $body); //remove head element
+    $body = escattr($body); // remove js
+
+    $body = preg_replace_callback('/<img ((?:[^>]*\s)*)src\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?(\/\s*)?>/i', function ($matches) use ($id) {
+      $base_url = substr($matches[3], 0, strrpos($matches[3], '/') + 1);
+      $image_url = url_to_absolute($base_url, $matches[3]);
+      $image = download_item($id, $image_url);
+
+      return ($image && $image['file_name'] ? '<img '.$matches[1].'src='.$matches[2].'index.php?action=view&id='.$id.'-'.$image['file_name'].'&type='.$image['header']['content_type'].$matches[4].(isset($matches[5]) ? $matches[5] : '').(isset($matches[6]) ? $matches[6] : '/').'>' : '');
+    }, $body); // download images and modify img src
+
+    $body = preg_replace(array('/<a [^>]*href=\'\'[^>]*>[^<]*<\/a>/i', '/<a [^>]*href=""[^>]*>[^<]*<\/a>/i', '/<a( [^>]*)?>[\r\n\s]*<\/a>/i', '/<td( [^>]*)?>[\r\n\s]*<\/td>/i', '/<tr( [^>]*)?>[\r\n\s]*<\/tr>/i', '/<table( [^>]*)?>[\r\n\s]*<\/table>/i'), '', $body); //remove white spaces
+    $body = preg_replace(array('/\s*[\r\n]+/'), "\n", $body); //remove white spaces
+
+    $body = '<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>'.(isset($title) && $title ? $title : '').'</title><link rel="profile" href="http://gmpg.org/xfn/11" /><link rel="shortcut icon" href="/favicon.ico" />
+<style type="text/css" media="all">
+<!--
+html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
+html,body{max-width:100%;overflow-x:hidden;}
+h1{font-size:2em;line-height:1.2em;}
+#main{font-size:24px;line-height:1.8em;margin:10px auto 23px;width:90%;max-width:1000px;word-wrap:break-word;}
+#main p,#main div,#main a,#main span{font-size:18px;line-height:1.8em;padding:.8em 0 0;margin:0;word-wrap:break-word;}
+#main img{max-width:98%;}
+-->
+</style>
+      </head><div id="main">'.$body.'</div></body></html>';
+
+    file_put_contents($file, $body);
   }
 
   if (filesize($file)) {
-    rename($file, $content_dir.$id.'-'.($file_name = sha1($file).'-'.filesize($file)));
+    rename($file, $content_dir.$id.'-'.($file_name = sha1_file($file).'-'.filesize($file)));
     return array('file_name' => $file_name, 'header' => $header);
   } else {
     if (file_exists($file))
