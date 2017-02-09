@@ -395,6 +395,10 @@ function get_url_response($url, $nobody = 0) {
 
   $header['downloadable'] = 0;
   $header['preview'] = 0;
+
+  if ($header['http_code'] !== 200 || (!$nobody && !$body))
+    return array('header' => $header, 'body' => $body);
+
   if ($header['content_type'] && substr($header['content_type'], 0, 6) == 'image/') {
     $header['downloadable'] = 1;
     $header['preview'] = $url;
