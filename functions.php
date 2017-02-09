@@ -167,12 +167,12 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 
     if (!isset($name) || !$name) {
       if ($header['http_code'] == 200 && strlen($body)) {
-        preg_match('/\<title\>(.*)\<\/title\>/si', $body, $title);
-        $name = trim((isset($title[1]) ? toutf8($title[1]) : ''));
+        preg_match('/<title(?:\s+[^>]*)?>(.*)<\/title>/si', $body, $title);
+        $name = trim((isset($title[1]) ? toutf8(strip_tags($title[1])) : ''));
       }
       if (!isset($name) || !$name) {
         if ($header['downloadable'])
-          $name = substr($url, strrpos($url, '/') + 1, 140);
+          $name = substr($url, (($pos = strrpos($url, '/')) ? $pos + 1 : 0), 140);
         else
           $name = substr($url, 0, 140);
       }
@@ -387,7 +387,7 @@ function get_url_response($url, $nobody = 0) {
   $header = array(
     'header_size' => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
     'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? strtolower($ct) : '')
+    'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? strtolower((($pos = strpos($ct, ';')) ? substr($ct, 0, $pos) : $ct)) : '')
   );
   $header['header'] = substr($response, 0, $header['header_size']);
   $body = (!$nobody ? substr($response, $header['header_size']) : '');
@@ -465,7 +465,7 @@ function download_item($id, $url) {
     $body = escattr($body); // remove js
 
     $body = preg_replace_callback('/<img ((?:[^>]*\s)*)src\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?(\/\s*)?>/i', function ($matches) use ($id) {
-      $base_url = substr($matches[3], 0, strrpos($matches[3], '/') + 1);
+      $base_url = substr($matches[3], 0, (($pos = strrpos($matches[3], '/')) ? $pos + 1 : strlen($matches[3])));
       $image_url = url_to_absolute($base_url, $matches[3]);
       $image = download_item($id, $image_url);
 

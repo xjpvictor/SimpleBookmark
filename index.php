@@ -47,10 +47,7 @@ if ($auth) {
       break;
     case 'view':
       if (isset($_GET['id']) && $_GET['id'] && file_exists($content_dir.$_GET['id'])) {
-        $type = urldecode($_GET['type']);
-        if (($pos = strpos($type, ';')))
-          $type = substr($type, 0, $pos);
-        header('Content-Type: '.$type);
+        header('Content-Type: '.urldecode($_GET['type']));
         readfile($content_dir.$_GET['id']);
         exit;
       }
