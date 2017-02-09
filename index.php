@@ -272,7 +272,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  $cache = 0;
+  //$cache = 0;
 
   $cache_file_folderlist = $cache_dir.'folders.html';
   if ($cache && file_exists($cache_file_folderlist) && filemtime($cache_file_folderlist) >= filemtime($bookmark_json)) {
@@ -663,6 +663,7 @@ document.addEventListener('gesturestart', function (e) {
   e.preventDefault();
 });
 </script>
+<!-- Cache generated at <?php echo date("r"); ?> -->
 </body>
 </html>
 
