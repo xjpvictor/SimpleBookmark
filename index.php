@@ -64,8 +64,12 @@ if ($auth) {
           }
           $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
         } else {
-          if (isset($_GET['url']) && ($url = urldecode($_GET['url'])) && ($file = download_item($_GET['id'], $url)))
-            $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('content_type' => $file['header']['content_type'], 'offline' => $file['file_name'], 'downloadable' => (isset($file['header']['downloadable']) ? $file['downloadable'] : 1), 'preview' => (isset($file['header']['preview']) ? $file['preview'] : ''))), $bookmark_json);
+          if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
+            if (($file = download_item($_GET['id'], $url)))
+              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('content_type' => $file['header']['content_type'], 'offline' => $file['file_name'], 'downloadable' => (isset($file['header']['downloadable']) ? $file['downloadable'] : 1), 'preview' => (isset($file['header']['preview']) ? $file['preview'] : ''))), $bookmark_json);
+            else
+              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('downloadable' => 0, 'preview' => 0)), $bookmark_json);
+          }
         }
         $anchor = $_GET['level'].'_'.$_GET['id'];
       }

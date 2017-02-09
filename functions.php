@@ -185,8 +185,6 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
   if ($type == 'url') {
     $new['_'.$id]['url'] = $url;
     $new['_'.$id]['meta'] = array(
-      'http_code' => $header['http_code'],
-      'last_access' => time(),
       'content_type' => $header['content_type'],
       'offline' => '',
       'downloadable' => $header['downloadable'],
