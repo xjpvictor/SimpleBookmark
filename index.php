@@ -269,7 +269,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  //$cache = 0;
+  $cache = 0;
 
   $cache_file_folderlist = $cache_dir.'folders.html';
   if ($cache && file_exists($cache_file_folderlist) && filemtime($cache_file_folderlist) >= filemtime($bookmark_json)) {
@@ -540,15 +540,15 @@ for (i = 0;i < targets.length;i++) {
     target.addEventListener('dragenter', handleDragEnter, false);
     target.addEventListener('drop', handleDrop, false);
   }
-};
-var moves=document.getElementsByClassName('move');
-for (i=0;i<moves.length;i++) {
-  var move=moves[i];
-  move.addEventListener('dragstart', handleDragStart, false);
-  move.addEventListener('dragend', handleDragEnd, false);
-  move.addEventListener('touchstart', handleTouchStart, false);
-  move.addEventListener('touchmove', handleTouchMove, false);
-  move.addEventListener('touchend', handleTouchEnd, false);
+  var id=target.getAttribute('data-id');
+  var move = document.getElementById('move-'+id);
+  if (typeof move !== 'undefined' && move !== null) {
+    move.addEventListener('dragstart', handleDragStart, false);
+    move.addEventListener('dragend', handleDragEnd, false);
+    move.addEventListener('touchstart', handleTouchStart, false);
+    move.addEventListener('touchmove', handleTouchMove, false);
+    move.addEventListener('touchend', handleTouchEnd, false);
+  }
 };
 var dragScrollTimer, dragScroll = 0;
 function dragScrollFunc() {
