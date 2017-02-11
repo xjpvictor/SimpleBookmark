@@ -18,6 +18,9 @@ $preview_filename_prefix = 'preview-';
 $preview_file_life = 7 * 86400;
 $preview_height = '20';
 $sync_file_prefix = 'sync-';
+$cache_file_urllist = $cache_dir.'urls.json';
+$cache_file_urlstatus = $cache_dir.'urlstatus.json';
+$lock_file_urlstatus = $cache_dir.'urlstatus.lock';
 
 if (@filemtime($config_file) && function_exists('opcache_invalidate'))
   opcache_invalidate($config_file,true);
@@ -27,6 +30,8 @@ include(__DIR__ . '/functions.php');
 
 $site_name = ($site_name ? $site_name : 'My Bookmarks');
 $site_url = ($site_url ? (stripos($site_url, 'http://') === false && stripos($site_url, 'https://') === false ? (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 'https://' : 'http://') : '').$site_url.(substr($site_url, -1) !== '/' ? '/' : '') : (isset($_SERVER['SERVER_NAME']) ? (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 'https://' : 'http://').$_SERVER['SERVER_NAME'].'/' : ''));
+
+$check_url = (!isset($check_url) ? 5 : $check_url);
 
 $cost = 12; //Need to reset password if change this
 if ($password && !preg_match('/\$2y\$'.$cost.'\$[\.\/0-9a-zA-Z]{'.(60-5-strlen($cost)).'}/', $password))

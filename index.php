@@ -47,7 +47,7 @@ if ($auth) {
       break;
     case 'view':
       if (isset($_GET['id']) && $_GET['id'] && file_exists($content_dir.$_GET['id'])) {
-        header('Content-Type: '.urldecode($_GET['type']));
+        header('Content-Type: '.mime_content_type($content_dir.$_GET['id']));
         readfile($content_dir.$_GET['id']);
         exit;
       }
@@ -66,7 +66,7 @@ if ($auth) {
         } else {
           if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
             if (($file = download_item($_GET['id'], $url)))
-              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('content_type' => $file['header']['content_type'], 'offline' => $file['file_name'], 'downloadable' => (isset($file['header']['downloadable']) ? $file['downloadable'] : 1), 'preview' => (isset($file['header']['preview']) ? $file['preview'] : ''))), $bookmark_json);
+              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file['file_name'], 'downloadable' => $file['downloadable'], 'preview' => $file['preview'])), $bookmark_json);
             else
               $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('downloadable' => 0, 'preview' => 0)), $bookmark_json);
           }
@@ -77,17 +77,23 @@ if ($auth) {
     case 'edit':
       if (isset($_GET['id']) && $_GET['id']) {
         $update = array('name' => $_POST['n']);
-        if (isset($_POST['u']))
+        if (isset($_POST['u'])) {
           $update['url'] = $_POST['u'];
+          if (isset($_POST['ou']) && $_POST['ou'] !== $_POST['u'])
+            $update['meta']['last_access'] = 0;
+        }
         if (isset($_POST['c']))
           $update['cache'] = $_POST['c'];
-        $entry = update_bookmark($_GET['id'], $update, $bookmark_json);
-        $l = ($_POST['l'] == '_0' ? '' : $_POST['l']);
-        if (isset($_POST['l']) && $l.'_'.$entry['id'] !== $_GET['id']) {
-          $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
-          move_bookmark($entry, $l.'_0', $bookmark_json);
+        if (isset($_POST['h']))
+          $update['hide_not_found'] = $_POST['h'];
+        if (($entry = update_bookmark($_GET['id'], $update, $bookmark_json))) {
+          $l = ($_POST['l'] == '_0' ? '' : $_POST['l']);
+          if (isset($_POST['l']) && $l.'_'.$entry['id'] !== $_GET['id']) {
+            $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
+            move_bookmark($entry, $l.'_0', $bookmark_json);
+          }
+          $anchor = $l.'_'.$entry['id'];
         }
-        $anchor = $l.'_'.$entry['id'];
       }
       break;
     case 'move':
@@ -139,17 +145,30 @@ if ($auth) {
               readfile($preview_file);
             } else
               echo $body;
-          }
+          } else
+            http_response_code(404);
         }
       }
       exit;
+    case 'checkurl':
+      if (isset($_GET['id']) && $_GET['id']) {
+        if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
+          $response = get_url_response($url, 1);
+          $entry = update_bookmark($_GET['id'], array('meta' => array('not_found' => (substr($response['header']['http_code'], 0, 1) != 2 ? 1 : 0), 'last_access' => time(), 'downloadable' => $response['header']['downloadable'], 'preview' => $response['header']['preview'])), $bookmark_json);
+        }
+        $anchor = $_GET['id'];
+      }
+      break;
     }
     header('Location: index.php'.(isset($anchor) && $anchor ? '#entry-'.$anchor : ''));
     exit;
   } elseif (isset($_GET['u'])) {
     $url = addhttp(urldecode(substr($_SERVER['QUERY_STRING'], 2)));
-    $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1);
-    echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to '.htmlentities($site_name).'?")) {window.location="'.$site_url.'";} else {window.location="'.$url.'";}</script></body></html>';
+    if ($url !== true) {
+      $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1);
+      echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to '.htmlentities($site_name).'?")) {window.location="'.$site_url.'";} else {window.location="'.$url.'";}</script></body></html>';
+    } else
+      echo '<html><body><script>alert("Only urls will be synced");</script></body></html>';
     //header('Location: '.$url);
     exit;
   }
@@ -170,13 +189,15 @@ if ($auth) {
 <link rel="icon" href="webapp-icon.png" />
 <style type="text/css" media="all">
 <!--
-html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
+html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti",sans-serif !important;font-size:14px;line-height:23px;}
 html,body{max-width:100%;overflow-x:hidden;}
 h3,.folder_title_name{font-size:16px;margin:0 0 1em;font-weight:bold;}
 a {color:#0000cc;text-decoration:none;}
 a:visited{color:#0000cc;}
 a:hover{color:red;}
 input[type="submit"]:hover,label:hover{cursor:pointer;}
+input[type="radio"],input[type="checkbox"]{margin:0 5px 2px 0;vertical-align:middle;}
+select{height:2em;}
 body,#main{padding:0;margin:0;}
 #wrap{padding:0 10px;}
 #logout{float:right;padding-right:10px;}
@@ -185,6 +206,8 @@ body,#main{padding:0;margin:0;}
 #addform form{padding:10px 10px;}
 #addform form input[type="text"]{width:50%;margin-right:5px;}
 #addform form input[type="submit"]{margin-right:5px;padding:4px 5px 5px;}
+#addform form input[type="radio"]{margin-left:8px;}
+#addform form select{margin-left:5px;}
 #advance{display:inline-block;padding:0;margin:0;}
 #content{padding:60px 10px 10px;}
 .entry:before{display:block;content:" ";margin-top:-70px;height:70px;visibility:hidden;}
@@ -204,6 +227,7 @@ form.save select{margin-left:5px;}
 form.save select:hover{cursor:pointer;}
 form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background:transparent;-webkit-appearance:none;padding:0;}
 .folder{border-bottom:1px solid #444;margin-top:1em;}
+.folder-wrap{margin-bottom:23px;}
 .folder .folder{margin-left:10px;}
 .folder_title{position:relative;}
 .folder_title_name{cursor:pointer;}
@@ -211,7 +235,7 @@ form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background
 .url .border{padding-left:8px;border-left:3px solid #666;display:block;}
 .target{position:relative;z-index:5;display:block;}
 .url .target{margin-left:3px;}
-.folder>.target{margin-top:-23px;margin-bottom:-1px;height:23px;}
+.folder>.target,#bookmarks>.target{margin-top:-23px;margin-bottom:-1px;height:23px;}
 .move{position:absolute;bottom:0;z-index:8;width:9px;height:100%;background:transparent;}
 .folder_title .move{left:-1px;}
 .url .move{left:-3px;}
@@ -222,10 +246,18 @@ form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background
 .folder>.editfolder{margin-top:20px;}
 .editform input[type="text"]{width:50%;margin:0 0 10px;padding:2px 4px;}
 .editform input[type="submit"]{margin:0 5px 0 0;padding:4px 5px 5px;}
+.editform select{margin-right:15px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
 .preview{width:20px;height:20px;display:inline-block;vertical-align:middle;text-align:center;overflow:hidden;margin-right:5px;}
 .preview img{height:20px;}
+a.url.not-found.show-not-found{color:#fff;background:#d42;padding-left:5px;padding-right:5px;}
+.not-found .preview{display:none;}
+.last-access{display:block;color:#999;font-size:.9em;margin:8px 0;min-height:1px;}
+.last-access span{color:#999;font-size:1em;margin-right:8px;}
+a.url-checker{color:#4caf50;font-size:1em;margin-right:8px;}
+.last-access span:empty{display:none;}
+.last-access-time:not(:empty):before{content:'Last checked at ';}
 #rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:transparent;height:60px;color:#fff;padding:0;margin:0;}
 #totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#000;text-align:center;padding:0;margin:0;display:inline-block;}
 #totop:hover,#tobottom:hover{color:#444;}
@@ -235,7 +267,7 @@ p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 #foot a:hover{color:#ca2017;}
 .move.drag,.move.touch{background:#fff;opacity:.9;width:auto;padding:3px 10px;border:1px solid #eee;border-radius:2px;}
 .move.touch{position:absolute;z-index:9999;left:0;right:0;display:block;}
-.target.drag{padding-top:15px;border-top:2px dashed #999;margin-top:0;}
+.target.drag,#bookmarks>.target.drag{padding-top:15px;border-top:2px dashed #999;margin-top:0;}
 .target.touch{z-index:9999;}
 #search-noresult{font-weight:bold;}
 #lock{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#fff;padding:20px;}
@@ -280,7 +312,7 @@ if (!$auth) {
     $folders = file_get_contents($cache_file_folderlist);
   } else {
     $bookmarks = parse_bookmark_json($bookmark_json);
-    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
+    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json, 1, 1, $check_url);
     $folders = $output['folder'];
     file_put_contents($cache_file_folderlist, $folders);
   }
@@ -310,7 +342,7 @@ if (!$auth) {
   // Parse bookmark json
   if (!isset($output)) {
     $bookmarks = parse_bookmark_json($bookmark_json);
-    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json);
+    $output = output_bookmarks($bookmarks[0]['entries'], $bookmark_json, 1, 1, $check_url);
   }
 
   // Show add bookmark box
@@ -348,6 +380,7 @@ if (!$auth) {
 
   echo '<div id="bookmarks"><h2 class="cat">My Bookmarks</h2>'."\n";
   echo $output['url'];
+  echo '<span class="target touchOver" id="target-_0" data-id="_0">&nbsp;</span>'."\n";
   echo '</div>'."\n";
   echo '</div></div>'."\n";
 }
@@ -659,6 +692,16 @@ if ($auth) {
 <p id="copy">&copy; <?php echo date("Y"); ?> <a href="index.php"><?php echo htmlentities($site_name); ?></a>. Powered by <a href="https://github.com/xjpvictor/SimpleBookmark" target="_blank">SimpleBookmark</a>.</p>
 </div>
 <img src='parsemail.php' alt='Parse mail' style="position:fixed;left:-3px;top:-20px;width:0;height:0;border:none;"/>
+
+<?php if ($check_url) : ?>
+<script>
+var d = document, s = d.createElement('script');
+s.src = "checkurls.php";
+s.async = true;
+d.body.appendChild(s);
+</script>
+<?php endif; ?>
+
 <script>
 document.addEventListener('gesturestart', function (e) {
   e.preventDefault();

@@ -1,9 +1,9 @@
 <?php
-function addhttp($url) {
-  if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
+function addhttp($url, $check_js = 1) {
+  if (!($js = preg_match("/^javascript:.*$/i", $url)) && !preg_match("~^(?:f|ht)tps?://~i", $url)) {
     $url = "http://" . $url;
   }
-  return $url;
+  return ($check_js && $js ? true : $url);
 }
 function toutf8($str) {
   if (!$str)
@@ -50,8 +50,11 @@ function parse_bookmark_json($bookmark_json) {
   return $bookmarks;
 }
 
-function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json, $output = array('url' => '', 'folder' => ''), $level = '') {
+function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $bookmark_json, $output = array('url' => '', 'folder' => '', 'urls' =>array()), $level = '') {
   global $site_url, $sync_file_prefix;
+
+  if (!$bookmarks)
+    return false;
 
   foreach ($bookmarks as $bookmark_id => $entry) {
     if (isset($entry['id'])) {
@@ -78,10 +81,10 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
-<a class="url touchOver'.($allow_edit ? ' search' : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
-'.((isset($entry['meta']['preview']) && ($r = $entry['meta']['preview'])) || in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif')) ? '<span class="preview"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
+<a class="url touchOver'.($allow_edit ? ' search'.(isset($entry['meta']['not_found']) && $entry['meta']['not_found'] ? ' not-found' : '').(isset($entry['hide_not_found']) && $entry['hide_not_found'] ? '' : ' show-not-found') : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
+'.((isset($entry['meta']['preview']) && ($r = $entry['meta']['preview'])) || ((!$check_url || !isset($entry['meta']['preview'])) && in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif'))) ? '<span class="preview" id="preview-'.$level.'_'.$entry['id'].'"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
 <span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
-'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] && isset($entry['meta']['content_type']) && $entry['meta']['content_type'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'&type='.urlencode($entry['meta']['content_type']).'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
+'.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'" target="_blank">Cache</a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
 </span>
 </span>
@@ -90,13 +93,19 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 '.($allow_edit ? '<form class="editform" id="editform-'.$level.'_'.$entry['id'].'" action="index.php?action=edit&id='.$level.'_'.$entry['id'].'" method="post">
 <input name="n" type="text" required value="'.htmlentities($entry['name']).'"><br/>
 <input name="u" type="text" required value="'.htmlentities($entry['url']).'"><br/>
-<select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select><br/><br/>
+<input type="hidden" name="ou" value="'.htmlentities($entry['url']).'">
+<select name="l">##FOLDERLIST-'.($level ? $level : '_0').'##</select>
+<input type="hidden" name="h" value="0">
+<span class="ignore"><label><input class="cache" type="checkbox" name="h" value="1"'.(isset($entry['hide_not_found']) && $entry['hide_not_found'] ? ' checked' : '').'>Mark page as accessible</label></span><br/>
+<p id="last-access-'.($level.'_'.$entry['id']).'" class="last-access">'.'<span id="last-access-message-'.($level.'_'.$entry['id']).'">'.(($n = (isset($entry['meta']['not_found']) && $entry['meta']['not_found'])) ? 'Page Not Found.' : '').'</span>'.(addhttp($entry['url']) !== true ? '<a href="index.php?action=checkurl&id='.$level.'_'.$entry['id'].'&url='.urlencode($entry['url']).'" class="url-checker">Check Page</a>' : '').'<span class="last-access-time" id="last-access-time-'.($level.'_'.$entry['id']).'">'.($n && isset($entry['meta']['last_access']) && $entry['meta']['last_access'] ? date('Y-m-d, G:i', $entry['meta']['last_access']) : '').'</span>'.'</p>'.'
 <input type="submit" value="Update">
 <a class="cancel" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Cancel</a>
 <a class="delete" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>
-'.(!isset($entry['meta']['downloadable']) || $entry['meta']['downloadable'] ? '<a class="save" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url']).(isset($entry['meta']['offline']) && $entry['meta']['offline'] ? '&delete='.$entry['meta']['offline'].'">Delete Cache' : '">Enable Cache').'</a>' : '').'
+'.(($s = '<a class="save" id="save-'.$level.'_'.$entry['id'].'" href="index.php?action=save&level='.$level.'&id='.$entry['id'].'&url='.urlencode($entry['url'])) && isset($entry['meta']['offline']) && $entry['meta']['offline'] ? $s.'&delete='.$entry['meta']['offline'].'">Delete Cache</a>' : (!isset($entry['meta']['downloadable']) || $entry['meta']['downloadable'] ? $s.'">Enable Cache</a>' : '')).'
 <br/>
 </form>' : '')."\n";
+          if ($check_url && addhttp($entry['url']) !== true)
+            $output['urls'][(isset($entry['meta']['not_found']) ? $entry['meta']['not_found'] : 0)]['_'.$entry['id']] = array('meta' => array_merge(array('not_found' => 0, 'last_access' => 0, 'offline' => '', 'downloadable' => 1, 'preview' => 0), (isset($entry['meta']) ? $entry['meta'] : array())), 'id' => $level.'_'.$entry['id'], 'url' => $entry['url'], 'index' => '_'.$entry['id'], 'time' => (isset($entry['meta']['last_access']) ? $entry['meta']['last_access'] : 0));
         }
       } elseif ($entry['type'] == 'folder') {
         $output['url'] .= '<!-- folder '.$entry['id'].' in '.($level ? $level : '0').' -->
@@ -129,11 +138,11 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
 <a class="sort-reverse" href="index.php?action=sort&id='.$level.'_'.$entry['id'].'&sort=0">Reverse order</a>
 </p>
 </form>' : '').'
-<span'.($allow_edit ? ' id="folder-wrap-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;">'."\n";
+<span'.($allow_edit ? ' class="folder-wrap" id="folder-wrap-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;">'."\n";
         if ($allow_edit)
           $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $bookmark_json, $output, $level.'_'.$entry['id']);
+          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $check_url, $bookmark_json, $output, $level.'_'.$entry['id']);
         $output['url'] .= '</span><span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
       }
     }
@@ -141,13 +150,25 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $book
   return $output;
 }
 
-function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1) {
-  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $bookmark_json);
+function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1, $check_url = 0) {
+  global $cache_file_urlstatus, $cache_file_urllist;
+
+  if ($check_url && file_exists($cache_file_urlstatus)) {
+    $urlstatus = json_decode(file_get_contents($cache_file_urlstatus), 1);
+    unlink($cache_file_urlstatus);
+    $urls = array_merge((isset($urlstatus[1]) ? $urlstatus[1] : array()), (isset($urlstatus[0]) ? $urlstatus[0] : array()));
+    $bookmarks = update_bookmark(array_keys($urls), $urls, $bookmark_json, 'meta');
+  }
+
+  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $bookmark_json);
 
   $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
-  $output['url'] = preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
+  $output['url'] = (isset($output['url']) && $output['url'] ? preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
     return str_replace('value="'.$match[1].'"', 'value="'.$match[1].'" selected', $output['folder']);
-  }, $output['url']);
+  }, $output['url']) : '');
+
+  if ($check_url)
+    file_put_contents($cache_file_urllist, json_encode($output['urls']));
 
   return $output;
 }
@@ -185,7 +206,8 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
   if ($type == 'url') {
     $new['_'.$id]['url'] = $url;
     $new['_'.$id]['meta'] = array(
-      'content_type' => $header['content_type'],
+      'not_found' => (substr($header['http_code'], 0, 1) != 2 ? 1 : 0),
+      'last_access' => time(),
       'offline' => '',
       'downloadable' => $header['downloadable'],
       'preview' => $header['preview'],
@@ -193,7 +215,8 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
     if ($redirect) {
       $new['_'.$id]['url'] = $site_url.'index.php?action=redirect&u='.urlencode($url).'&id=_'.$id;
       $new['_'.$id]['original_url'] = $url;
-    }
+    } else
+      $new['_'.$id]['hide_not_found'] = 0;
   } else
     $new['_'.$id]['cache'] = 0;
 
@@ -234,7 +257,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 }
 
 function update_bookmark_recursive($bookmark, $levels, $index, $callback_function, $callback_parameters) {
-  if (empty($levels) || $index == count($levels)) {
+  if (empty($levels) || (isset($levels[$index]) && !$levels[$index]) || $index == count($levels)) {
     $data = call_user_func($callback_function, $bookmark, $callback_parameters);
   } else {
     $data = update_bookmark_recursive($bookmark['entries']['_'.$levels[$index]], $levels, $index + 1, $callback_function, $callback_parameters);
@@ -281,21 +304,36 @@ function delete_bookmark_callback($bookmark, $parameters) {
   return ((isset($contents) ? array($bookmark, $entry, $contents) : array($bookmark, $entry)));
 }
 
-function update_bookmark($id, $update, $bookmark_json) {
+function update_bookmark($ids, $updates, $bookmark_json, $key = '') {
   $bookmark = parse_bookmark_json($bookmark_json);
-  $levels = explode('_', substr($id, 1));
-  $id = array_pop($levels);
-  $data = update_bookmark_recursive($bookmark[0], $levels, 0, 'update_bookmark_callback', array($id, $update));
-  $bookmark[0] = $data[0];
+  if (!$ids)
+    return $bookmark[0]['entries'];
+  $str = false;
+  if (is_string($ids)) {
+    $str = true;
+    $updates = array($ids => $updates);
+    $ids = array($ids);
+  }
+  $data = array();
+  foreach ($ids as $index => $id) {
+    $update = ($key ? array($key => $updates[$id][$key]) : $updates[$id]);
+    $id = (isset($updates[$id]['id']) ? $updates[$id]['id'] : $id);
+    $levels = explode('_', substr($id, 1));
+    $id = array_pop($levels);
+    $d = update_bookmark_recursive($bookmark[0], $levels, 0, 'update_bookmark_callback', array($id, $update));
+    $bookmark[0] = $d[0];
+    $data[] = $d[1];
+  }
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
-  return $data[1];
+  return ($str ? $data[0] : $bookmark[0]['entries']);
 }
 
 function update_bookmark_callback($bookmark, $parameters) {
   $id = $parameters[0];
   $update = $parameters[1];
-  $bookmark['entries']['_'.$id] = array_replace_recursive($bookmark['entries']['_'.$id], $update);
-  return (array($bookmark, $bookmark['entries']['_'.$id]));
+  if (isset($bookmark['entries']['_'.$id]))
+    $bookmark['entries']['_'.$id] = array_replace_recursive($bookmark['entries']['_'.$id], $update);
+  return (array($bookmark, (isset($bookmark['entries']['_'.$id]) ? $bookmark['entries']['_'.$id] : false)));
 }
 
 function move_bookmark($entry, $destination, $bookmark_json) {
@@ -373,7 +411,7 @@ function sort_bookmark_callback($bookmark, $parameters) {
   return (array($bookmark, ($id == 0 ? $bookmark['entries'] : $bookmark['entries']['_'.$id])));
 }
 
-function get_url_response($url, $nobody = 0) {
+function get_url_response($url, $nobody = 0, $return_value = '') {
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -391,12 +429,21 @@ function get_url_response($url, $nobody = 0) {
   $body = (!$nobody ? substr($response, $header['header_size']) : '');
   curl_close($ch);
 
+  if ($return_value)
+    return (isset($header[$return_value]) ? $header[$return_value] : false);
+
   $header['downloadable'] = 0;
   $header['preview'] = 0;
 
   if ($header['http_code'] !== 200 || (!$nobody && !$body))
     return array('header' => $header, 'body' => $body);
 
+  $header = parse_header($header, $body, $url);
+
+  return array('header' => $header, 'body' => $body);
+}
+
+function parse_header($header, $body, $url) {
   if ($header['content_type'] && substr($header['content_type'], 0, 6) == 'image/') {
     $header['downloadable'] = 1;
     $header['preview'] = $url;
@@ -408,7 +455,7 @@ function get_url_response($url, $nobody = 0) {
   } elseif ($header['content_type'] && (substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
     $header['downloadable'] = 1;
 
-  return array('header' => $header, 'body' => $body);
+  return $header;
 }
 
 function download_item($id, $url) {
@@ -471,7 +518,7 @@ function download_item($id, $url) {
       $image_url = url_to_absolute($base_url, $matches[3]);
       $image = download_item($id, $image_url);
 
-      return ($image && $image['file_name'] ? '<img '.$matches[1].'src='.$matches[2].'index.php?action=view&id='.$id.'-'.$image['file_name'].'&type='.$image['header']['content_type'].$matches[4].(isset($matches[5]) ? $matches[5] : '').(isset($matches[6]) ? $matches[6] : '/').'>' : '');
+      return ($image && $image['file_name'] ? '<img '.$matches[1].'src='.$matches[2].'index.php?action=view&id='.$id.'-'.$image['file_name'].$matches[4].(isset($matches[5]) ? $matches[5] : '').(isset($matches[6]) ? $matches[6] : '/').'>' : '');
     }, $body); // download images and modify img src
 
     $body = preg_replace(array('/<a [^>]*href=\'\'[^>]*>[^<]*<\/a>/i', '/<a [^>]*href=""[^>]*>[^<]*<\/a>/i', '/<a( [^>]*)?>[\r\n\s]*<\/a>/i', '/<td( [^>]*)?>[\r\n\s]*<\/td>/i', '/<tr( [^>]*)?>[\r\n\s]*<\/tr>/i', '/<table( [^>]*)?>[\r\n\s]*<\/table>/i'), '', $body); //remove white spaces
@@ -480,7 +527,7 @@ function download_item($id, $url) {
     $body = '<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>'.(isset($title) && $title ? $title : '').'</title><link rel="profile" href="http://gmpg.org/xfn/11" /><link rel="shortcut icon" href="favicon.ico" />
 <style type="text/css" media="all">
 <!--
-html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","wenquanyi micro hei","droid sans fallback",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti","microsoft yahei",\5FAE\8F6F\96C5\9ED1,sans-serif !important;font-size:14px;line-height:23px;}
+html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti",sans-serif !important;font-size:14px;line-height:23px;}
 html,body{max-width:100%;overflow-x:hidden;}
 h1{font-size:2em;line-height:1.2em;}
 #main{font-size:24px;line-height:1.8em;margin:10px auto 23px;width:90%;max-width:1000px;word-wrap:break-word;}

@@ -4,6 +4,8 @@ $password = '';
 $site_name = '';
 $site_url = '';
 
+$check_url = 5;
+
 $mail_box = ''; // email address, must set if allow adding bookmarks via email
 $mail_pwd = ''; // email account password, must set if allow adding bookmarks via email
 $mail_server = ''; // must set if allow adding bookmarks via email
