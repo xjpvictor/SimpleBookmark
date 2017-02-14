@@ -105,7 +105,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
 <br/>
 </form>' : '')."\n";
           if ($check_url && addhttp($entry['url']) !== true)
-            $output['urls'][(isset($entry['meta']['not_found']) ? $entry['meta']['not_found'] : 0)]['_'.$entry['id']] = array('meta' => array_merge(array('not_found' => 0, 'http_code' => 200, 'last_access' => 0, 'offline' => '', 'downloadable' => 1, 'preview' => 0), (isset($entry['meta']) ? $entry['meta'] : array())), 'id' => $level.'_'.$entry['id'], 'url' => $entry['url'], 'index' => '_'.$entry['id'], 'time' => (isset($entry['meta']['last_access']) ? $entry['meta']['last_access'] : 0));
+            $output['urls'][(isset($entry['meta']['not_found']) ? $entry['meta']['not_found'] : 0)]['_'.$entry['id']] = array('meta' => array_merge(array('not_found' => 0, 'http_code' => 200, 'last_access' => 0, 'offline' => '', 'downloadable' => 1, 'preview' => 0), (isset($entry['meta']) ? $entry['meta'] : array())), 'id' => $level.'_'.$entry['id'], 'url' => $entry['url'], 'index' => '_'.$entry['id']);
         }
       } elseif ($entry['type'] == 'folder') {
         $output['url'] .= '<!-- folder '.$entry['id'].' in '.($level ? $level : '0').' -->

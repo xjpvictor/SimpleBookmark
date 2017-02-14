@@ -110,9 +110,7 @@ if (file_exists($lock_file_urlstatus) && $timestamp - filemtime($lock_file_urlst
 
 touch($lock_file_urlstatus);
 
-if (isset($urls[0]) && $urls[0])
-  array_multisort(array_column($urls[0], 'time', 'index'), SORT_ASC, SORT_NUMERIC, $urls[0]);
-$urls_to_update = array_merge((isset($urls[1]) && $urls[1] ? $urls[1] : array()), (isset($urls[0]) && $urls[0] ? array_slice($urls[0], 0, $check_url, 1) : array()));
+$urls_to_update = array_merge((isset($urls[1]) && $urls[1] ? $urls[1] : array()), (isset($urls[0]) && $urls[0] ? array_slice($urls[0], rand(0, count($urls[0])-1), $check_url, 1) : array()));
 
 if ($urls_to_update) {
   $responses = get_http_code($urls_to_update, $timestamp);
@@ -121,7 +119,6 @@ if ($urls_to_update) {
     foreach ($responses as $index => $response) {
       $entry = $urls_to_update[$index];
       $entry['meta']['last_access'] = $timestamp;
-      $entry['time'] = $timestamp;
       $entry['meta']['http_code'] = $response['http_code'];
       unset($urls[$entry['meta']['not_found']][$index]);
       if (isset($urls[($entry['meta']['not_found'] ? 0 : 1)][$index]))
