@@ -9,6 +9,7 @@ if (!file_exists(($config_file = ($data_dir = __DIR__ . '/data/').'config.php'))
 if (!function_exists('password_hash'))
   exit('Please update your php version >= 5.5.3');
 
+$curl_ua = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36';
 $bookmark_json = $data_dir.'bookmarks.json';
 $sync_json = $data_dir.'sync.json';
 $content_dir = $data_dir.'contents/';
@@ -21,6 +22,7 @@ $sync_file_prefix = 'sync-';
 $cache_file_urllist = $cache_dir.'urls.json';
 $cache_file_urlstatus = $cache_dir.'urlstatus.json';
 $lock_file_urlstatus = $cache_dir.'urlstatus.lock';
+$cache_file_urlstatus_output = $cache_dir.'urlstatus.js';
 
 if (@filemtime($config_file) && function_exists('opcache_invalidate'))
   opcache_invalidate($config_file,true);

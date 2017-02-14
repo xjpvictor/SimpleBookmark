@@ -62,13 +62,13 @@ if ($auth) {
                 unlink($file);
             }
           }
-          $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
+          $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => '')), $bookmark_json);
         } else {
           if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
             if (($file = download_item($_GET['id'], $url)))
-              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file['file_name'], 'downloadable' => $file['downloadable'], 'preview' => $file['preview'])), $bookmark_json);
+              $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file['file_name'], 'downloadable' => $file['downloadable'], 'preview' => $file['preview'])), $bookmark_json);
             else
-              $entry = update_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('downloadable' => 0, 'preview' => 0)), $bookmark_json);
+              $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('downloadable' => 0, 'preview' => 0)), $bookmark_json);
           }
         }
         $anchor = $_GET['level'].'_'.$_GET['id'];
@@ -86,7 +86,7 @@ if ($auth) {
           $update['cache'] = $_POST['c'];
         if (isset($_POST['h']))
           $update['hide_not_found'] = $_POST['h'];
-        if (($entry = update_bookmark($_GET['id'], $update, $bookmark_json))) {
+        if (($entry = edit_bookmark($_GET['id'], $update, $bookmark_json))) {
           $l = ($_POST['l'] == '_0' ? '' : $_POST['l']);
           if (isset($_POST['l']) && $l.'_'.$entry['id'] !== $_GET['id']) {
             $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
@@ -128,10 +128,13 @@ if ($auth) {
           curl_setopt($ch, CURLOPT_HEADER, 1);
           curl_setopt($ch, CURLOPT_TIMEOUT, 30);
           curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'User-Agent: '.$curl_ua,
+          ));
           $response = curl_exec($ch);
           $header = array(
             'header_size' => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
-            'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
+            'http_code' => (($hc = curl_getinfo($ch, CURLINFO_HTTP_CODE)) ? $hc : 404),
             'content_type' => (($ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE)) ? strtolower($ct) : '')
           );
           $header['header'] = substr($response, 0, $header['header_size']);
@@ -154,7 +157,7 @@ if ($auth) {
       if (isset($_GET['id']) && $_GET['id']) {
         if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
           $response = get_url_response($url, 1);
-          $entry = update_bookmark($_GET['id'], array('meta' => array('not_found' => (substr($response['header']['http_code'], 0, 1) != 2 ? 1 : 0), 'last_access' => time(), 'downloadable' => $response['header']['downloadable'], 'preview' => $response['header']['preview'])), $bookmark_json);
+          $entry = edit_bookmark($_GET['id'], array('meta' => array('not_found' => (substr($response['header']['http_code'], 0, 1) != 2 ? 1 : 0), 'http_code' => $response['header']['http_code'], 'last_access' => time(), 'downloadable' => $response['header']['downloadable'], 'preview' => $response['header']['preview'])), $bookmark_json);
         }
         $anchor = $_GET['id'];
       }
@@ -258,6 +261,8 @@ a.url.not-found.show-not-found{color:#fff;background:#d42;padding-left:5px;paddi
 a.url-checker{color:#4caf50;font-size:1em;margin-right:8px;}
 .last-access span:empty{display:none;}
 .last-access-time:not(:empty):before{content:'Last checked at ';}
+.last-access-code:before{content:'(';}
+.last-access-code:after{content:')';}
 #rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:transparent;height:60px;color:#fff;padding:0;margin:0;}
 #totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#000;text-align:center;padding:0;margin:0;display:inline-block;}
 #totop:hover,#tobottom:hover{color:#444;}
@@ -695,10 +700,18 @@ if ($auth) {
 
 <?php if ($check_url) : ?>
 <script>
-var d = document, s = d.createElement('script');
-s.src = "checkurls.php";
-s.async = true;
-d.body.appendChild(s);
+function addURLChecker(c) {
+  var urlchecker = document.getElementById("urlchecker");
+  if (typeof urlchecker !== "undefined" && urlchecker !== null) {
+    urlchecker.parentNode.removeChild(urlchecker);
+  }
+  var d = document, s = d.createElement('script');
+  s.src = "checkurls.php?c="+c;
+  s.async = true;
+  s.id = "urlchecker";
+  d.body.appendChild(s);
+}
+setTimeout(addURLChecker, 3, 1);
 </script>
 <?php endif; ?>
 
