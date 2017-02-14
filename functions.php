@@ -142,7 +142,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
         if ($allow_edit)
           $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $cache_prefix, $check_url, $update_status, $bookmark_json, $output, $level.'_'.$entry['id']);
+          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $check_url, $cache_prefix, $update_status, $bookmark_json, $output, $level.'_'.$entry['id']);
         $output['url'] .= '</span><span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
       }
     }
@@ -153,7 +153,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
 function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1, $check_url = 0, $cache_prefix = '', $update_status = 1) {
   global $cache_file_urllist;
 
-  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $cache_prefix, $check_url, $update_status, $bookmark_json);
+  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $cache_prefix, $update_status, $bookmark_json);
 
   $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
   $output['url'] = (isset($output['url']) && $output['url'] ? preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
