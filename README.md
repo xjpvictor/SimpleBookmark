@@ -9,6 +9,12 @@ This is a simple web-based bookmark manager written in PHP
 
 * Automatically get url titles
 
+* Automatically check url accessibility
+
+* Show preview of image urls
+
+* Allow caching image, text, pdf and html page (in readability mode)
+
 * Drag and Drop to organize bookmarks
 
 * Search for bookmarks
