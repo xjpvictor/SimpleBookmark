@@ -93,7 +93,7 @@ if (isset($_GET['c']) && $_GET['c'] == 1) {
   if (file_exists($cache_file_urlstatus_output))
     echo file_get_contents($cache_file_urlstatus_output);
 }
-echo 'setTimeout(addURLChecker, 5000, 0);';
+echo 'setTimeout(addURLChecker, 10000, 0);';
 
 $size=ob_get_length();
 header("Content-Length: $size");
