@@ -14,7 +14,7 @@ if ($auth) {
           parse_str(parse_url($_POST['u'], PHP_URL_QUERY), $u);
           $_POST['u'] = $u['u'];
           if (isset($u['id']) && $u['id'])
-            delete_bookmark($u['id'], 0, $sync_json, $sync_file_prefix);
+            delete_bookmark($u['id'], 0, $sync_json, $sync_file_prefix, 0);
         }
 
         $entry = add_bookmark($_POST['u'], $_POST['d'], ($_POST['t'] == 'sync' ? 'url' : $_POST['t']), $bookmark_json, (isset($_POST['n']) && $_POST['n'] ? $_POST['n'] : null));
@@ -28,7 +28,7 @@ if ($auth) {
     case 'delete':
       if (isset($_GET['id']) && $_GET['id']) {
         if (isset($_GET['mode']) && $_GET['mode'] == 'sync') {
-          $entry = delete_bookmark($_GET['id'], 0, $sync_json);
+          $entry = delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
         } else {
           $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
           $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
@@ -39,7 +39,7 @@ if ($auth) {
       if (isset($_GET['u']) && $_GET['u']) {
         if (isset($_GET['id']) && $_GET['id']) {
           $url = urldecode($_GET['u']);
-          $entry = delete_bookmark($_GET['id'], 0, $sync_json);
+          $entry = delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
           header('Location: '.$url);
           exit;
         }
@@ -168,7 +168,7 @@ if ($auth) {
   } elseif (isset($_GET['u'])) {
     $url = addhttp(urldecode(substr($_SERVER['QUERY_STRING'], 2)));
     if ($url !== true) {
-      $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1);
+      $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1, 0);
       echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to '.htmlentities($site_name).'?")) {window.location="'.$site_url.'";} else {window.location="'.$url.'";}</script></body></html>';
     } else
       echo '<html><body><script>alert("Only urls will be synced");</script></body></html>';
@@ -310,7 +310,7 @@ if (!$auth) {
 </div><br/>';
 } else {
   $cache = true;
-  $cache = 0;
+  //$cache = 0;
 
   $cache_file_folderlist = $cache_dir.'folders.html';
   if ($cache && file_exists($cache_file_folderlist) && filemtime($cache_file_folderlist) >= filemtime($bookmark_json)) {
@@ -327,7 +327,7 @@ if (!$auth) {
     $sync_output = file_get_contents($cache_file_synclist);
   else {
     $sync = (file_exists($sync_json) ? parse_bookmark_json($sync_json) : false);
-    $output_sync = ($sync !== false ? output_bookmarks($sync[0]['entries'], $sync_json, 0, 1) : '');
+    $output_sync = ($sync !== false ? output_bookmarks($sync[0]['entries'], $sync_json, 0, 1, 0, $sync_file_prefix, 0) : '');
     if ($output_sync && $output_sync['url'])
       $sync_output = $output_sync['url'];
     else

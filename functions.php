@@ -50,7 +50,7 @@ function parse_bookmark_json($bookmark_json) {
   return $bookmarks;
 }
 
-function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $bookmark_json, $output = array('url' => '', 'folder' => '', 'urls' =>array()), $level = '') {
+function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $cache_prefix, $update_status, $bookmark_json, $output = array('url' => '', 'folder' => '', 'urls' =>array()), $level = '') {
   global $site_url, $sync_file_prefix;
 
   if (!$bookmarks)
@@ -62,7 +62,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
         if (!isset($entry['hash']))
           $entry['hash'] = sha1($entry['url']);
         if ($deduplicate && is_array($deduplicate) && isset($deduplicate[$entry['hash']]))
-          $entry = delete_bookmark(($level ? $level : 0).'_'.$entry['id'], 0, $bookmark_json);
+          $entry = delete_bookmark(($level ? $level : 0).'_'.$entry['id'], 0, $bookmark_json, $cache_prefix, $update_status);
         else {
           if ($deduplicate) {
             if (is_array($deduplicate))
@@ -142,7 +142,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
         if ($allow_edit)
           $output['folder'] .= '<option value="'.$level.'_'.$entry['id'].'">'.$entry['name'].'</option>'."\n";
         if (isset($entry['entries']) && !empty($entry['entries']))
-          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $check_url, $bookmark_json, $output, $level.'_'.$entry['id']);
+          $output = output_bookmarks_recursive($entry['entries'], $allow_edit, $deduplicate, $cache_prefix, $check_url, $update_status, $bookmark_json, $output, $level.'_'.$entry['id']);
         $output['url'] .= '</span><span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'_0" data-id="'.$level.'_'.$entry['id'].'_0"' : '').'>&nbsp;</span></div>'."\n";
       }
     }
@@ -150,10 +150,10 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
   return $output;
 }
 
-function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1, $check_url = 0) {
+function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplicate = 1, $check_url = 0, $cache_prefix = '', $update_status = 1) {
   global $cache_file_urllist;
 
-  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $check_url, $bookmark_json);
+  $output = output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $cache_prefix, $check_url, $update_status, $bookmark_json);
 
   $output['folder'] = '<option value="_0">My Bookmarks</option>'."\n".$output['folder'];
   $output['url'] = (isset($output['url']) && $output['url'] ? preg_replace_callback('/##FOLDERLIST-([_0-9]+)##/i', function ($match) use ($output) {
@@ -166,10 +166,11 @@ function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplic
   return $output;
 }
 
-function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redirect = 0) {
+function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redirect = 0, $update_status = 1) {
   global $site_url;
 
-  edit_bookmark_status($bookmark_json);
+  if ($update_status)
+    edit_bookmark_status($bookmark_json);
 
   if ($bookmark = parse_bookmark_json($bookmark_json))
     $id = (++$bookmark[1]);
@@ -247,7 +248,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
   if ($type == 'folder')
-    move_bookmark($data, ($folder !== '_0' ? $folder : '').'_-1', $bookmark_json);
+    move_bookmark($data, ($folder !== '_0' ? $folder : '').'_-1', $bookmark_json, $update_status);
 
   return $data;
 }
@@ -263,10 +264,11 @@ function update_bookmark_recursive($bookmark, $levels, $index, $callback_functio
   return $data;
 }
 
-function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = '') {
+function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = '', $update_status = 1) {
   global $content_dir, $cache_dir, $preview_filename_prefix;
 
-  edit_bookmark_status($bookmark_json);
+  if ($update_status)
+    edit_bookmark_status($bookmark_json);
 
   $bookmark = parse_bookmark_json($bookmark_json);
   $levels = explode('_', substr($id, 1));
@@ -302,7 +304,7 @@ function delete_bookmark_callback($bookmark, $parameters) {
   return ((isset($contents) ? array($bookmark, $entry, $contents) : array($bookmark, $entry)));
 }
 
-function edit_bookmark($ids, $updates, $bookmark_json, $key = '') {
+function edit_bookmark($ids, $updates, $bookmark_json, $key = '', $update_status = 1) {
   if (!$ids)
     return false;
 
@@ -311,7 +313,8 @@ function edit_bookmark($ids, $updates, $bookmark_json, $key = '') {
     $str = true;
     $updates = array($ids => $updates);
     $ids = array($ids);
-    edit_bookmark_status($bookmark_json);
+    if ($update_status)
+      edit_bookmark_status($bookmark_json);
   }
 
   $bookmark = parse_bookmark_json($bookmark_json);
@@ -350,14 +353,15 @@ function edit_bookmark_status($bookmark_json) {
     $urlstatus = json_decode(file_get_contents($cache_file_urlstatus), 1);
     unlink($cache_file_urlstatus);
     $urls = array_merge((isset($urlstatus[1]) ? $urlstatus[1] : array()), (isset($urlstatus[0]) ? $urlstatus[0] : array()));
-    $bookmarks = edit_bookmark(array_keys($urls), $urls, $bookmark_json, 'meta');
+    $bookmarks = edit_bookmark(array_keys($urls), $urls, $bookmark_json, 'meta', 0);
     return $bookmarks;
   }
   return false;
 }
 
-function move_bookmark($entry, $destination, $bookmark_json) {
-  edit_bookmark_status($bookmark_json);
+function move_bookmark($entry, $destination, $bookmark_json, $update_status = 1) {
+  if ($update_status)
+    edit_bookmark_status($bookmark_json);
 
   $bookmark = parse_bookmark_json($bookmark_json);
   $levels = explode('_', substr($destination, 1));
@@ -383,8 +387,9 @@ function move_bookmark_callback($bookmark, $parameters) {
   return (array($bookmark, $entry));
 }
 
-function sort_bookmark($id, $sort, $recursive = 0, $bookmark_json) {
-  edit_bookmark_status($bookmark_json);
+function sort_bookmark($id, $sort, $recursive = 0, $bookmark_json, $update_status = 1) {
+  if ($update_status)
+    edit_bookmark_status($bookmark_json);
 
   $bookmark = parse_bookmark_json($bookmark_json);
   $id_s = $id;
@@ -401,7 +406,7 @@ function sort_bookmark($id, $sort, $recursive = 0, $bookmark_json) {
       $entries = $data[1]['entries'];
     foreach ($entries as $entry) {
       if ($entry['type'] == 'folder') {
-        $data[1]['entries']['_'.$entry['id']] = sort_bookmark($id_s.'_'.$entry['id'], $sort, 1, $bookmark_json);
+        $data[1]['entries']['_'.$entry['id']] = sort_bookmark($id_s.'_'.$entry['id'], $sort, 1, $bookmark_json, $update_status);
       }
     }
   }
