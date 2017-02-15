@@ -148,8 +148,15 @@ if ($auth) {
               readfile($preview_file);
             } else
               echo $body;
-          } else
-            http_response_code(404);
+          } else {
+            $preview_file = $cache_dir . $preview_filename_prefix . '404';
+            if (file_exists($preview_file))
+              readfile($preview_file);
+            else {
+              $dimg = imagecreatetruecolor($preview_height, $preview_height);
+              imagejpeg($dimg, $preview_file, 90);
+            }
+          }
         }
       }
       exit;

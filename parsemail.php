@@ -119,7 +119,6 @@ if (!function_exists('imap_open')) {
   exit('IMAP extension not installed');
 }
 
-$parsemail = true;
 include(__DIR__ . '/init.php');
 
 if (!$mail_box || !$mail_pwd || !$mail_server || empty($allowed_mail)) {
@@ -149,7 +148,6 @@ if ($mails) {
   foreach ($mails as $mail) {
     $header = $mail[0];
     $body = $mail[1]['content'];
-    $note = false;
 
     if (($header['recent'] == 'N' || $header['unseen'] == 'U') && $header['deleted'] !== 'D' && $header['draft'] !== 'X' && isset($header['from'][0]['addr']) && $header['from'][0]['addr'] && $allowed_mail && in_array($header['from'][0]['addr'], $allowed_mail)) {
       if ($body) {

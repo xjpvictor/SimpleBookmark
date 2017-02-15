@@ -478,6 +478,11 @@ function get_url_response($url, $nobody = 0, $return_value = '') {
 }
 
 function parse_header($header, $body, $url) {
+  global $lib_dir;
+
+  if (!function_exists('url_to_absolute'))
+    include($lib_dir.'url_to_absolute.php');
+
   if ($header['content_type'] && substr($header['content_type'], 0, 6) == 'image/') {
     $header['downloadable'] = 1;
     $header['preview'] = $url;
@@ -485,6 +490,8 @@ function parse_header($header, $body, $url) {
     $header['downloadable'] = 1;
     if ($body && (preg_match('/<meta\s+([^>]*\s+)?property\s*=\s*("|\')og:image("|\')\s+([^>]*\s+)?content\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches) || preg_match('/<meta\s+([^>]*\s+)?name\s*=\s*("|\')twitter:image("|\')\s+([^>]*\s+)?content\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches) || preg_match('/<link\s+([^>]*\s+)?rel\s*=\s*("|\')image_src("|\')\s+([^>]*\s+)?href\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?>/si', $body, $matches))) {
       $header['preview'] = trim((isset($matches[6]) ? $matches[6] : $header['preview']));
+      $domain = substr($url, 0, (($pos = strpos($url, '/', (strpos($url, 'http://') !== false || strpos($url, 'https://') !== false ? 9 : 0))) !== false ? $pos : strlen($url)));
+      $header['preview'] = preg_replace(array('/^\/\//', '/^\//'), array('', $domain.'/'), url_to_absolute(substr($url, 0, strrpos($url, '/')+1), $header['preview']));
     }
   } elseif ($header['content_type'] && (substr($header['content_type'], 0, 5) == 'text/' || $header['content_type'] == 'application/pdf' || $header['content_type'] == 'application/xhtml+xml' || $header['content_type'] == 'application/xml'))
     $header['downloadable'] = 1;
@@ -541,7 +548,8 @@ function download_item($id, $url) {
     require $lib_dir.'readability/config.inc.php';
     require $lib_dir.'readability/common.inc.php';
     require $lib_dir.'readability/Readability.inc.php';
-    include($lib_dir.'url_to_absolute.php');
+    if (!function_exists('url_to_absolute'))
+      include($lib_dir.'url_to_absolute.php');
     $Readability = new Readability($body, 'utf8');
     $ReadabilityData = $Readability->getContent();
     $body = '<h1>'.$ReadabilityData['title'].'</h1>'.$ReadabilityData['content'];
@@ -550,9 +558,10 @@ function download_item($id, $url) {
     $body = preg_replace(array('/<(!DOCTYPE |\/)?html[^>]*>/i', '/<\/?body[^>]*>/i', '/<head[^>]*>.*<\/head>/i', '/<\/?head[^>]*>/i', '/<title[^>]*>.*<\/title>/i', '/<\/?title[^>]*>/i', '/<meta[^>]*>/i', '/<link[^>]*>/i', '/<!--[^>]*-->/i'), '', $body); //remove head element
     $body = escattr($body); // remove js
 
-    $body = preg_replace_callback('/<img ((?:[^>]*\s)*)src\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?(\/\s*)?>/i', function ($matches) use ($id) {
-      $base_url = substr($matches[3], 0, (($pos = strrpos($matches[3], '/')) ? $pos + 1 : strlen($matches[3])));
-      $image_url = url_to_absolute($base_url, $matches[3]);
+    $body = preg_replace_callback('/<img ((?:[^>]*\s)*)src\s*=\s*("|\')([^"\']+)("|\')(\s+[^>]*)?(\/\s*)?>/i', function ($matches) use ($id, $url) {
+      $base_url = substr($url, 0, strrpos($url, '/') + 1);
+      $domain = substr($url, 0, (($pos = strpos($url, '/', (strpos($url, 'http://') !== false || strpos($url, 'https://') !== false ? 9 : 0))) !== false ? $pos : strlen($url)));
+      $image_url = preg_replace(array('/^\/\//', '/^\//'), array('', $domain.'/'), url_to_absolute($base_url, $matches[3]));
       $image = download_item($id, $image_url);
 
       return ($image && $image['file_name'] ? '<img '.$matches[1].'src='.$matches[2].'index.php?action=view&id='.$id.'-'.$image['file_name'].$matches[4].(isset($matches[5]) ? $matches[5] : '').(isset($matches[6]) ? $matches[6] : '/').'>' : '');
