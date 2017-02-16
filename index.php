@@ -302,7 +302,7 @@ a.url-checker{color:#4caf50;font-size:1em;margin-right:8px;}
 </style>
 </head>
 <body>
-<div id="main">
+<div id="main" style="display:none;">
 
 <?php
 if (!$auth) {
@@ -431,20 +431,25 @@ function lockDown() {
     window.removeEventListener("scroll", setLockCookie);
     window.removeEventListener("mousemove", setLockCookie);
     window.removeEventListener("mousedown", setLockCookie);
-    window.removeEventListener("keydown", setLockCookie);
+    window.removeEventListener("keypress", setLockCookie);
     document.title = 'Locked | <?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
-  } else
+    return true;
+  } else {
     setTimeout("lockDown()", 60000);
+    return false;
+  }
 }
 if (<?php echo (isset($cache) && $cache ? '##LOCKDOWN##' : (isset($passcode) && $passcode !== '' ? 1 : 0)); ?>) {
-  lockDown();
-  setTimeout(function() {
-    window.addEventListener("scroll", setLockCookie);
-    window.addEventListener("mousemove", setLockCookie);
-    window.addEventListener("mousedown", setLockCookie);
-    window.addEventListener("keydown", setLockCookie);
-  }, 10000);
+  if (!lockDown()) {
+    setTimeout(function() {
+      window.addEventListener("scroll", setLockCookie);
+      window.addEventListener("mousemove", setLockCookie);
+      window.addEventListener("mousedown", setLockCookie);
+      window.addEventListener("keypress", setLockCookie);
+    }, 1000);
+  }
 }
+document.getElementById('main').style.display='block';
 function notRobot() {
   document.cookie = "_spbkmk_bookmark_notRobot=1;path=/";
   window.removeEventListener("scroll", notRobot);
