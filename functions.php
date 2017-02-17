@@ -170,9 +170,9 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
   global $site_url;
 
   if ($update_status)
-    edit_bookmark_status($bookmark_json);
+    $bookmark = edit_bookmark_status($bookmark_json);
 
-  if ($bookmark = parse_bookmark_json($bookmark_json))
+  if (($bookmark = (!isset($bookmark) || !$bookmark ? parse_bookmark_json($bookmark_json) : $bookmark)))
     $id = (++$bookmark[1]);
   else
     $id = 1;
@@ -268,9 +268,9 @@ function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = 
   global $content_dir, $cache_dir, $preview_filename_prefix;
 
   if ($update_status)
-    edit_bookmark_status($bookmark_json);
+    $bookmark = edit_bookmark_status($bookmark_json);
 
-  $bookmark = parse_bookmark_json($bookmark_json);
+  $bookmark = (!isset($bookmark) || !$bookmark ? parse_bookmark_json($bookmark_json) : $bookmark);
   $levels = explode('_', substr($id, 1));
   $id = array_pop($levels);
   $data = update_bookmark_recursive($bookmark[0], $levels, 0, 'delete_bookmark_callback', array($id, $delete_contents));
@@ -304,38 +304,25 @@ function delete_bookmark_callback($bookmark, $parameters) {
   return ((isset($contents) ? array($bookmark, $entry, $contents) : array($bookmark, $entry)));
 }
 
-function edit_bookmark($ids, $updates, $bookmark_json, $key = '', $update_status = 1) {
-  if (!$ids)
+function edit_bookmark($id, $update, $bookmark_json, $update_status = 1) {
+  if (!$id)
     return false;
 
-  $str = false;
-  if (is_string($ids)) {
-    $str = true;
-    $updates = array($ids => $updates);
-    $ids = array($ids);
-    if ($update_status)
-      edit_bookmark_status($bookmark_json);
-  }
+  if ($update_status)
+    $bookmark = edit_bookmark_status($bookmark_json);
 
-  $bookmark = parse_bookmark_json($bookmark_json);
-
+  $bookmark = (!isset($bookmark) || !$bookmark ? parse_bookmark_json($bookmark_json) : $bookmark);
   if (!$bookmark)
     return false;
 
-  $data = array();
-  foreach ($ids as $index => $id) {
-    $update = ($key ? array($key => $updates[$id][$key]) : $updates[$id]);
-    $id = (isset($updates[$id]['id']) ? $updates[$id]['id'] : $id);
-    $levels = explode('_', substr($id, 1));
-    $id = array_pop($levels);
-    $d = update_bookmark_recursive($bookmark[0], $levels, 0, 'edit_bookmark_callback', array($id, $update));
-    $bookmark[0] = $d[0];
-    $data[] = $d[1];
-  }
+  $levels = explode('_', substr($id, 1));
+  $id = array_pop($levels);
+  $data = update_bookmark_recursive($bookmark[0], $levels, 0, 'edit_bookmark_callback', array($id, $update));
+  $bookmark[0] = $data[0];
 
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
 
-  return ($str ? $data[0] : $bookmark[0]['entries']);
+  return $data[1];
 }
 
 function edit_bookmark_callback($bookmark, $parameters) {
@@ -353,17 +340,38 @@ function edit_bookmark_status($bookmark_json) {
     $urlstatus = json_decode(file_get_contents($cache_file_urlstatus), 1);
     unlink($cache_file_urlstatus);
     $urls = array_merge((isset($urlstatus[1]) ? $urlstatus[1] : array()), (isset($urlstatus[0]) ? $urlstatus[0] : array()));
-    $bookmarks = edit_bookmark(array_keys($urls), $urls, $bookmark_json, 'meta', 0);
-    return $bookmarks;
+    if (!$urls)
+      return false;
+
+    $bookmark = parse_bookmark_json($bookmark_json);
+    if (!$bookmark)
+      return false;
+
+    $data = array();
+    foreach ($urls as $index => $url) {
+      $levels = explode('_', substr($url['id'], 1));
+      $id = array_pop($levels);
+      $levels = array_reverse($levels);
+      $entry = array('_'.$id => array('meta' => $url['meta']));
+      foreach ($levels as $level) {
+        $entry = array('_'.$level => array('entries' => $entry));
+      }
+      $data = array_replace_recursive($data, $entry);
+    }
+
+    $bookmark[0]['entries'] = array_replace_recursive($bookmark[0]['entries'], $data);
+    file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
+
+    return $bookmark;
   }
   return false;
 }
 
 function move_bookmark($entry, $destination, $bookmark_json, $update_status = 1) {
   if ($update_status)
-    edit_bookmark_status($bookmark_json);
+    $bookmark = edit_bookmark_status($bookmark_json);
 
-  $bookmark = parse_bookmark_json($bookmark_json);
+  $bookmark = (!isset($bookmark) || !$bookmark ? parse_bookmark_json($bookmark_json) : $bookmark);
   $levels = explode('_', substr($destination, 1));
   $position = '_'.array_pop($levels);
   $data = update_bookmark_recursive($bookmark[0], $levels, 0, 'move_bookmark_callback', array($entry, $position));
@@ -389,9 +397,9 @@ function move_bookmark_callback($bookmark, $parameters) {
 
 function sort_bookmark($id, $sort, $recursive = 0, $bookmark_json, $update_status = 1) {
   if ($update_status)
-    edit_bookmark_status($bookmark_json);
+    $bookmark = edit_bookmark_status($bookmark_json);
 
-  $bookmark = parse_bookmark_json($bookmark_json);
+  $bookmark = (!isset($bookmark) || !$bookmark ? parse_bookmark_json($bookmark_json) : $bookmark);
   $id_s = $id;
   $levels = explode('_', substr($id, 1));
   $id = array_pop($levels);
