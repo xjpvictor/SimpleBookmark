@@ -221,8 +221,12 @@ body,#main{padding:0;margin:0;}
 #advance{display:inline-block;padding:0;margin:0;}
 #content{padding:60px 10px 10px;}
 .entry:before{display:block;content:" ";margin-top:-70px;height:70px;visibility:hidden;}
-a.edit,a.delete,a.save,a.cancel,a.offline{margin-left:5px;font-weight:normal;}
+a.edit,a.delete,a.save,a.cancel,a.offline,a.qr{margin-left:5px;font-weight:normal;}
 a.edit,a.save,a.cancel{color:#666;}
+.qr img{vertical-align:middle;height:15px;opacity:.6;margin-bottom:4px;}
+#qrcode{position:fixed;top:0;left:0;bottom:0;right:0;z-index:9998;background:rgba(255,255,255,.8);opacity:1;-webkit-transition:all ease-in-out .3s;}
+#qrcode:empty{pointer-events:none;opacity:0;}
+#qrcode img{position:fixed;top:50%;left:50%;margin-top:-50px;margin-left:-50px;width:100px;height:100px;}
 a.delete{color:red;}
 a.delete.noedit{color:#666;}
 a.offline{background:#4caf50;color:#fff;padding:2px 5px 0;border-radius:2px;display:inline-block;font-size:0.9em;line-height:21px;}
@@ -732,6 +736,8 @@ document.addEventListener('gesturestart', function (e) {
   e.preventDefault();
 });
 </script>
+<div id="qrcode" onclick="this.innerHTML='';"></div>
+<script src="lib/qrcode.js"></script>
 <!-- Cache generated at <?php echo date("r"); ?> -->
 </body>
 </html>
