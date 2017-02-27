@@ -52,15 +52,13 @@ body{padding:0 !important;margin:0 !important;}
 #wrap input[type="submit"]{width:70px !important;font-size:14px !important;}
 #wrap input[type="submit"]:hover{cursor:pointer !important;}
 #wrap p{color:#fff !important;font-size:16px !important;text-align:center !important;margin:4px 0 !important;}
-#cancel{position:absolute !important;top:0px !important;right:0px !important;background:white !important;color:black !important;font-size:13px !important;font-weight:bold !important;text-align:center !important;line-height:1em !important;margin:0 !important;padding:0 !important;width:13px !important;height:13px !important;border-radius:13px !important;border:2px solid #000 !important;}
+#cancel{position:absolute !important;top:0px !important;right:0px !important;background:white !important;color:black !important;font-size:13px !important;font-weight:bold !important;text-align:center !important;line-height:14px !important;margin:0 !important;padding:0 !important;width:13px !important;height:13px !important;border-radius:13px !important;border:2px solid #000 !important;}
 #cancel:hover{cursor:pointer !important;}
 </style>
 </head>
 <body>
 <div id="wrap">
-<div id="cancel" onclick="window.top.postMessage('spb_close', '<?php echo urldecode($_GET['href']); ?>');" title="Cancel">
-x
-</div>
+<div id="cancel" onclick="window.top.postMessage('spb_close', '<?php echo urldecode($_GET['href']); ?>');" title="Cancel">&#9747;</div>
 <?php
 if ($auth && ((isset($_GET['d']) && $_GET['d'] !== '_') || isset($_POST['d']))) {
   if (add_bookmark(urldecode($_GET['u']), (isset($_POST['d']) ? $_POST['d'] : $_GET['d']), 'url', $bookmark_json, (isset($_GET['n']) && $_GET['n'] ? urldecode($_GET['n']) : null))) {
