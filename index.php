@@ -116,6 +116,7 @@ if ($auth) {
     case 'preview':
       if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
         header('Content-Type: image/jpeg');
+        header('Expires: '.gmdate('D, d M Y H:i:s', strtotime('+1 week')).' GMT');
         $preview_file = $cache_dir . $preview_filename_prefix . $_GET['id'] . '-' . sha1($url);
         if (file_exists($preview_file) && time() - filemtime($preview_file) <= $preview_file_life) {
           readfile($preview_file);
@@ -126,7 +127,7 @@ if ($auth) {
           curl_setopt($ch, CURLOPT_URL, $url);
           curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
           curl_setopt($ch, CURLOPT_HEADER, 1);
-          curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+          curl_setopt($ch, CURLOPT_TIMEOUT, 5);
           curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
           curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'User-Agent: '.$curl_ua,
@@ -149,13 +150,13 @@ if ($auth) {
             } else
               echo $body;
           } else {
-            $preview_file = $cache_dir . $preview_filename_prefix . '404';
-            if (file_exists($preview_file))
-              readfile($preview_file);
-            else {
+            $preview_no_file = $cache_dir . $preview_filename_prefix . '404';
+            if (!file_exists($preview_no_file)) {
               $dimg = imagecreatetruecolor($preview_height, $preview_height);
-              imagejpeg($dimg, $preview_file, 90);
+              imagejpeg($dimg, $preview_no_file, 90);
             }
+            copy($preview_no_file, $preview_file);
+            readfile($preview_no_file);
           }
         }
       }
