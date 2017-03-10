@@ -82,7 +82,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
 <span class="move'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true"' : '').'></span>
 <span class="border touchOver" data-id="'.$level.'_'.$entry['id'].'">
 <a class="url touchOver'.($allow_edit ? ' search'.(!$check_url && isset($entry['not_found']) && $entry['not_found'] ? ' not-found' : '').(isset($entry['hide_not_found']) && $entry['hide_not_found'] ? '' : ' show-not-found') : '').'" href="'.$entry['url'].'"'.($allow_edit ? ' id="'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="url" title="'.htmlentities($entry['url']).'">
-'.((isset($entry['meta']['preview']) && ($r = $entry['meta']['preview'])) || ((!$check_url || !isset($entry['meta']['preview'])) && in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif'))) ? '<span class="preview" id="preview-'.$level.'_'.$entry['id'].'"><img src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" /></span>' : '').'
+'.((isset($entry['meta']['preview']) && ($r = $entry['meta']['preview'])) || ((!$check_url || !isset($entry['meta']['preview'])) && in_array(strtolower(substr(($r = (!$allow_edit && isset($entry['original_url']) && $entry['original_url'] ? $entry['original_url'] : $entry['url'])), strrpos($r, '.')+1)), array('jpg', 'jpeg', 'png', 'gif'))) ? '<img class="preview" id="preview-'.$level.'_'.$entry['id'].'" src="index.php?action=preview&id='.($allow_edit ? '' : $sync_file_prefix).$entry['id'].'&url='.urlencode($r).'" onerror="this.style.display=\'none\';" />' : '').'
 <span class="touchOver" data-id="'.$level.'_'.$entry['id'].'" id="title-'.$level.'_'.$entry['id'].'">'.$entry['name'].'</span></a>
 '.($allow_edit ? (isset($entry['meta']['offline']) && $entry['meta']['offline'] ? '<a class="offline" href="index.php?action=view&id='.$entry['id'].'-'.$entry['meta']['offline'].'" target="_blank">Cache</a>' : '').(addhttp($entry['url']) !== true ? '<a class="qr" href="javascript:var qr=document.getElementById(\'qrcode\');qr.innerHTML=\'\';new QRCode(qr,{text:\''.str_replace('\'', '\\\'', $entry['url']).'\',width:100,height:100});"><img src="lib/mobile.png" alt="QR Code" title="QR Code" /></a>' : '').'<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>' : '<a class="delete noedit" onclick="return confirm(\'Permanently delete this bookmark?\');" href="index.php?mode=sync&action=delete&id='.$level.'_'.$entry['id'].'">Delete</a>').'
 '.(!$allow_edit ? '<select name="d" onchange="if(this.selectedIndex)this.form.submit();"><option value="-1" selected disabled style="display:none;">Save</option>##FOLDERLIST##</select>' : '').'
@@ -621,6 +621,7 @@ function imagecreatefrombmp($p_sFile) {
   $x = 0;
   $y = 1;
   $image = imagecreatetruecolor($width, $height);
+  imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
   $body = substr($hex, 108);
   $body_size = (strlen($body) / 2);
   $header_size = ($width * $height);
@@ -672,26 +673,28 @@ function createthumbnail($source_file, $height) {
     $simg = imagecreatefrombmp($source_file);
     break;
   case 'vnd.wap.wbmp':
-    $simg = imagecreatefrombmp($source_file);
+    $simg = imagecreatefromwbmp($source_file);
     break;
   }
   if (!isset($simg) || !$simg)
     return false;
 
-  $width = min($height, ($w / $h) * $height);
-  $wm = max($w, $width) / $width;
-  $hm = max($h, $height) / $height;
-  $adjusted_w = $w / min($hm, $wm);
-  $adjusted_h = $h / min($hm, $wm);
-  $half_height = $height / 2;
+  $width = $height; // Width of dest image
+  $wm = $w / $width; // Width magnification
+  $hm = $h / $height; // Height magnification
+  $m = max(1, $hm, $wm); // Magnification
+  $adjusted_w = $w / $m; // New width of src image
+  $adjusted_h = $h / $m; // New height of src image
   $half_width = $width / 2;
+  $half_height = $height / 2;
   $half_w = $adjusted_w / 2;
   $half_h = $adjusted_h / 2;
-  $int_w = $half_w - $half_width;
-  $int_h = $half_h - $half_height;
+  $int_w = $half_width - $half_w;
+  $int_h = $half_height - $half_h;
 
   $dimg = imagecreatetruecolor($width, $height);
-  imagecopyresampled($dimg, $simg, -$int_w, -$int_h, 0, 0, $adjusted_w, $adjusted_h, $w, $h);
+  imagefill($dimg, 0, 0, imagecolorallocate($dimg, 255, 255, 255));
+  imagecopyresampled($dimg, $simg, $int_w, $int_h, 0, 0, $adjusted_w, $adjusted_h, $w, $h);
 
   if ($dimg) {
     imagejpeg($dimg, $source_file, 90);
