@@ -361,7 +361,7 @@ if (!$auth) {
   echo '<div id="addform">'."\n";
   echo '<p id="logout"><a href="index.php?action=logout">Log out</a></p>';
   echo '<form action="index.php?action=add" method="post">'."\n";
-  echo '<input type="text" required name="u" id="search" onkeydown="getStr(event);" onkeyup="searchStr(event);">'."\n";
+  echo '<input type="text" required name="u" id="search" onkeydown="getStr(event);" onkeyup="searchStr();">'."\n";
   echo '<input type="submit" value="Add">'."\n";
   echo '<p id="advance"><a href="javascript:;" onclick="toggleShow(\'addform-more\');">Advance</a></p>'."\n";
   echo '<div id="addform-more" style="display:none;">'."\n";
@@ -385,12 +385,12 @@ if (!$auth) {
 
   // Show bookmarks
   echo '<div id="content"><div id="folder-wrap">'."\n";
-  echo '<span class="entry" id="entry-sync"></span><div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
+  echo '<span class="entry sync" id="entry-sync"></span><div id="sync"><h2 class="cat">URL Sync</h2>'."\n";
   echo '<a class="bookmarklet" href="javascript:var url=\''.$site_url.'?u=\'+encodeURIComponent(window.location);window.location=url;" onclick="if(event.preventDefault){event.preventDefault();}if(event.stopPropagation){event.stopPropagation();}return false;" title="Drag to add bookmarklet">Sync URL to '.htmlentities($site_name).'</a>';
   echo (isset($cache) && $cache ? '##SYNCLIST##' : $sync_output);
   echo '</div>'."\n";
 
-  echo '<div id="bookmarks"><h2 class="cat">My Bookmarks</h2>'."\n";
+  echo '<div id="bookmarks"><h2 class="cat" id="mybookmarks">My Bookmarks</h2>'."\n";
   echo $output['url'];
   echo '<span class="target touchOver" id="target-_0" data-id="_0">&nbsp;</span>'."\n";
   echo '</div>'."\n";
@@ -615,9 +615,13 @@ document.getElementById('addform').addEventListener('dragover', dragScrollFunc, 
 document.getElementById('addform').addEventListener('dragleave', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 document.getElementById('addform').addEventListener('drop', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 // Search
+var searchTimeout='';
 function getStr(event) {
+  clearTimeout(searchTimeout);
   if (event.keyCode === 27) {
+    document.getElementById('search').value='';
     document.getElementById('search').blur();
+    searchStr();
   } else if (event.keyCode === 13) {
     if (event.preventDefault) {
       event.preventDefault();
@@ -626,61 +630,75 @@ function getStr(event) {
       event.stopPropagation();
     }
     return false;
-  }
-}
-function searchStrFunction() {
-  var searchtext=document.getElementById('search').value.toLowerCase();
-  if (searchtext) {
-    document.getElementById('sync').style.display='none';
-  } else {
-    document.getElementById('sync').style.display='block';
-  }
-  var links=document.getElementsByClassName('search');
-  for(i=0;i<links.length;i++) {
-    var link=links[i];
-    var id=link.getAttribute('data-id');
-    var type=link.getAttribute('data-type');
-    var elem=document.getElementById('entry-' + id);
-    var form=document.getElementById('editform-' + id);
-    elem.style.display='block';
-    form.style.display='none';
-    var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
-    if (type=='url') {
-      var href=link.getAttribute('href').toLowerCase();
-      if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
-        elem.classList.add('hide');
-        var l=id;
-        while ((l=l.substring(0, l.lastIndexOf('_')))) {
-          document.getElementById('entry-' + l).style.display='block';
-          document.getElementById('editform-' + l).style.display='none';
-          if (document.getElementById('folder-wrap-' + l).offsetHeight == 0) {
-            var t = document.getElementById('title-' + l).innerHTML.toLowerCase();
-            if (t.indexOf(searchtext)=='-1') {
-              document.getElementById(l).classList.add('hide');
-            }
-          }
-        }
-      } else {
-        elem.classList.remove('hide');
-        var l=id;
-        while ((l=l.substring(0, l.lastIndexOf('_')))) {
-          document.getElementById('entry-' + l).style.display='block';
-          document.getElementById('editform-' + l).style.display='none';
-          document.getElementById(l).classList.remove('hide');
-        }
+  } else if (document.getElementById('search').value) {
+    var entries=document.getElementsByClassName('entry');
+    for(i=0;i<entries.length;i++) {
+      var id=entries[i].getAttribute('data-id');
+      if(!entries[i].classList.contains('sync')) {
+        document.getElementById('entry-' + id).style.display='block';
+        document.getElementById('editform-' + id).style.display='none';
       }
     }
   }
+}
+function searchStrFunction() {
+  var str=document.getElementById('search').value;
+  var searchtext=(str ? str.toLowerCase() : '');
+  var showFolders='', level='';
+
+  if (!searchtext) {
+    document.getElementById('sync').style.display='block';
+    document.getElementById('entry-sync').style.display='block';
+    document.getElementById('mybookmarks').style.display='block';
+    document.getElementById('target-_0').style.display='block';
+    var entries=document.getElementsByClassName('hide');
+    for(i=entries.length-1;i>=0;i--) {
+      entries[i].classList.remove('hide');
+    }
+  } else {
+    document.getElementById('sync').style.display='none';
+    document.getElementById('entry-sync').style.display='none';
+    document.getElementById('mybookmarks').style.display='none';
+    document.getElementById('target-_0').style.display='none';
+    var links=document.getElementsByClassName('search');
+    for(i=0;i<links.length;i++) {
+      var link=links[i];
+      var id=link.getAttribute('data-id');
+      var type=link.getAttribute('data-type');
+      var elem=document.getElementById('entry-' + id);
+      var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
+      if (type=='url') {
+        var href=link.getAttribute('href').toLowerCase();
+        if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
+          elem.classList.add('hide');
+        } else {
+          elem.classList.remove('hide');
+          var parentId=link.getAttribute('data-level');
+          if(level !== parentId){
+            showFolders+=','+parentId;
+            level=parentId;
+          }
+        }
+      }
+    }
+    var titles=document.getElementsByClassName('folder_title_name');
+    for(i=0;i<titles.length;i++) {
+      var id=titles[i].getAttribute('data-id');
+      if (showFolders.indexOf(','+id+'_')=='-1')
+        document.getElementById(id).classList.add('hide');
+      else
+        document.getElementById(id).classList.remove('hide');
+    }
+  }
+
   if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
     document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
   } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
     elemns.parentNode.removeChild(elemns);
   }
 }
-var timeout=null;
-function searchStr(event) {
-  clearTimeout(timeout);
-  timeout=setTimeout(searchStrFunction(), 100);
+function searchStr() {
+  searchTimeout=setTimeout(searchStrFunction, 100);
 }
 </script>
 <?php
