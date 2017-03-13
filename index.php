@@ -116,16 +116,10 @@ if ($auth) {
     case 'preview':
       if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
         header('Content-Type: image/jpeg');
-        header('Expires: '.gmdate('D, d M Y H:i:s', strtotime('+1 year')).' GMT');
+        header('Expires: '.gmdate('D, d M Y H:i:s', time() + $preview_file_life).' GMT');
         $preview_file = $cache_dir . $preview_filename_prefix . $_GET['id'] . '-' . sha1($url);
-        $preview_no_file = $cache_dir . $preview_filename_prefix . '404';
-        if (!file_exists($preview_no_file)) {
-          $dimg = imagecreatetruecolor(1, 1);
-          imagefill($dimg, 0, 0, imagecolorallocate($dimg, 255, 255, 255));
-          imagejpeg($dimg, $preview_no_file, 90);
-        }
-        if (file_exists($preview_file)) {
-          if (filesize($preview_file) > filesize($preview_no_file))
+        if (file_exists($preview_file) && time() - filemtime($preview_file) <= $preview_file_life) {
+          if (filesize($preview_file))
             readfile($preview_file);
           else
             http_response_code(404);
@@ -157,7 +151,7 @@ if ($auth) {
             } else
               echo $body;
           } else {
-            copy($preview_no_file, $preview_file);
+            touch($preview_file);
             http_response_code(404);
           }
         }
