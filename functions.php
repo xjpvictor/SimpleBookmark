@@ -184,7 +184,7 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
 
     if (!isset($name) || !$name) {
       if ($header['http_code'] == 200 && strlen($body)) {
-        preg_match('/<title(?:\s+[^>]*)?>(.*)<\/title>/si', $body, $title);
+        preg_match('/<title(?:\s+[^>]*)?>((?:.(?!<\/title>))*.)<\/title>/si', $body, $title);
         $name = trim((isset($title[1]) ? toutf8(strip_tags($title[1])) : ''));
       }
       if (!isset($name) || !$name) {
