@@ -166,7 +166,7 @@ function output_bookmarks($bookmarks, $bookmark_json, $allow_edit = 1, $deduplic
   return $output;
 }
 
-function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redirect = 0, $update_status = 1) {
+function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redirect = 0, $update_status = 1, $reverse_order = 0) {
   global $site_url;
 
   if ($update_status)
@@ -241,9 +241,12 @@ function add_bookmark($url, $folder, $type, $bookmark_json, $name = null, $redir
     }
   }
 
-  if (isset($bookmark[0]['entries']) && is_array($bookmark[0]['entries']))
-    $bookmark[0]['entries'] = array_merge_recursive($bookmark[0]['entries'], $new);
-  else
+  if (isset($bookmark[0]['entries']) && is_array($bookmark[0]['entries'])) {
+    if ($reverse_order)
+      $bookmark[0]['entries'] = array_merge_recursive($new, $bookmark[0]['entries']);
+    else
+      $bookmark[0]['entries'] = array_merge_recursive($bookmark[0]['entries'], $new);
+  } else
     $bookmark[0]['entries'] = $new;
 
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);

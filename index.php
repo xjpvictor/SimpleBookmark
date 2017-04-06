@@ -172,7 +172,7 @@ if ($auth) {
   } elseif (isset($_GET['u'])) {
     $url = addhttp(urldecode(substr($_SERVER['QUERY_STRING'], 2)));
     if ($url !== true) {
-      $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1, 0);
+      $entry = add_bookmark($url, '_0', 'url', $sync_json, null, 1, 0, 1);
       echo '<html><body><script>if (window.confirm("URL synced to '.htmlentities($site_name).'. Redirect to '.htmlentities($site_name).'?")) {window.location="'.$site_url.'";} else {window.location="'.$url.'";}</script></body></html>';
     } else
       echo '<html><body><script>alert("Only urls will be synced");</script></body></html>';
