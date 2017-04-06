@@ -196,7 +196,7 @@ if ($auth) {
 <link rel="icon" href="webapp-icon.png" />
 <style type="text/css" media="all">
 <!--
-html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",FreeSans,Helvetica,Arial,"hiragino sans gb","stheiti",sans-serif !important;font-size:14px;line-height:23px;}
+html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",Helvetica,Arial,sans-serif !important;font-size:14px;line-height:23px;}
 html,body{max-width:100%;overflow-x:hidden;}
 h3,.folder_title_name{font-size:16px;margin:0 0 1em;font-weight:bold;}
 a {color:#0000cc;text-decoration:none;}

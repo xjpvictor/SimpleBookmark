@@ -42,7 +42,7 @@ include(__DIR__ . '/init.php');
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <style type="text/css" media="all">
-html, body, div, span, h1, p, a, input, textarea{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",FreeSans,Helvetica,Arial,sans-serif !important;font-size:14px !important;line-height:1.8em !important;}
+html, body, div, span, h1, p, a, input, textarea{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",Helvetica,Arial,sans-serif !important;font-size:14px !important;line-height:1.8em !important;}
 html,body{background:transparent !important;}
 body{padding:0 !important;margin:0 !important;}
 #wrap{background-color:#000 !important;border:1px solid red !important;border-radius:3px !important;margin:6px 6px 0 0 !important;}
