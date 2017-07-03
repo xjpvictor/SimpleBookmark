@@ -216,7 +216,6 @@ if ($auth)
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="apple-touch-icon" href="webapp-icon.png" />
-##PRELOAD##
 <link rel="icon" href="webapp-icon.png" />
 <style type="text/css" media="all">
 <!--
@@ -806,7 +805,6 @@ document.addEventListener('gesturestart', function (e) {
 if (isset($cache) && $cache) {
   $html = ob_get_contents();
   ob_clean();
-  $html = str_replace(array('##PRELOAD##'), array((isset($output['preload']) && $output['preload'] ? $output['preload'] : '')), $html);
   file_put_contents($cache_file, $html);
   echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), $html);
   if (isset($_SESSION['lock']))
