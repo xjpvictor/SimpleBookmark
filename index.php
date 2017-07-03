@@ -115,15 +115,32 @@ if ($auth) {
       exit;
     case 'preview':
       if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
+        ob_end_clean();
+        ob_start();
         header('Content-Type: image/jpeg');
         header('Expires: '.gmdate('D, d M Y H:i:s', time() + $preview_file_life).' GMT');
         $preview_file = $cache_dir . $preview_filename_prefix . $_GET['id'] . '-' . sha1($url);
-        if (file_exists($preview_file) && time() - filemtime($preview_file) <= $preview_file_life) {
-          if (filesize($preview_file))
+        if (file_exists($preview_file)) {
+          if (filesize($preview_file)) {
+            header('HTTP/1.1 200 Ok');
             readfile($preview_file);
-          else
-            http_response_code(404);
-        } else {
+          } else
+            header('HTTP/1.1 404 Not Found');
+
+          $size=ob_get_length();
+          header("Content-Length: $size");
+          header("Connection: close");
+          ob_end_flush();
+          flush();
+          if (function_exists('fastcgi_finish_request'))
+            fastcgi_finish_request();
+          if (session_id())
+            session_write_close();
+        }
+
+        ob_end_clean();
+
+        if (!file_exists($preview_file) || time() - filemtime($preview_file) > $preview_file_life) {
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL, $url);
           curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
