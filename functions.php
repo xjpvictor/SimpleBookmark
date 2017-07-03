@@ -438,10 +438,17 @@ function sort_bookmark_callback($bookmark, $parameters) {
       $seq[] = strtolower($entry[$sort]);
       $type[] = $entry['type'];
     }
-    if ($sort == 'name')
-      array_multisort($type, SORT_ASC, SORT_STRING, $seq, SORT_ASC, SORT_NATURAL, ($id == 0 ? $bookmark['entries'] : $bookmark['entries']['_'.$id]['entries']));
-    elseif ($sort == 'date_added')
-      array_multisort($type, SORT_DESC, SORT_STRING, $seq, SORT_DESC, ($id == 0 ? $bookmark['entries'] : $bookmark['entries']['_'.$id]['entries']));
+    if ($sort == 'name') {
+      if ($id == 0)
+        array_multisort($type, SORT_ASC, SORT_STRING, $seq, SORT_ASC, SORT_NATURAL, $bookmark['entries']);
+      else
+        array_multisort($type, SORT_ASC, SORT_STRING, $seq, SORT_ASC, SORT_NATURAL, $bookmark['entries']['_'.$id]['entries']);
+    } elseif ($sort == 'date_added') {
+      if ($id == 0)
+        array_multisort($type, SORT_DESC, SORT_STRING, $seq, SORT_DESC, $bookmark['entries']);
+      else
+        array_multisort($type, SORT_DESC, SORT_STRING, $seq, SORT_DESC, $bookmark['entries']['_'.$id]['entries']);
+    }
   } else {
     if ($id == 0)
       $bookmark['entries'] = array_reverse($bookmark['entries']);
