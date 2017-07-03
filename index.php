@@ -199,6 +199,10 @@ if ($auth) {
     exit;
   }
 }
+
+if ($auth)
+  ob_start();
+
 ?>
 
 <?php // Head ?>
@@ -212,6 +216,7 @@ if ($auth) {
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="apple-touch-icon" href="webapp-icon.png" />
+##PRELOAD##
 <link rel="icon" href="webapp-icon.png" />
 <style type="text/css" media="all">
 <!--
@@ -364,11 +369,10 @@ if (!$auth) {
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
+    ob_end_clean();
     echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), file_get_contents($cache_file));
     exit;
   }
-
-  ob_start();
 
   // Parse bookmark json
   if (!isset($output)) {
@@ -425,7 +429,7 @@ if (!$auth) {
 </div> <!-- End of main -->
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
-<form method="POST" action="javascript:void(0);" onSubmit="var elem=document.getElementById('passcode');var script=document.createElement('script');script.id='lock_s';script.src='passcode.php?p='+elem.value;document.body.appendChild(script);elem.value='';">
+<form method="POST" action="javascript:void(0);" onSubmit="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
 <input id="passcode" type="password" autofocus>
 <input type="submit" value="Unlock">
 </form>
@@ -458,6 +462,28 @@ function lockDown() {
     setTimeout("lockDown()", 60000);
     return false;
   }
+}
+function lockUnlock(p) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", 'passcode.php', true);
+  xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) {
+      if (xhr.status == 200) {
+        document.getElementById('lock').style.display='none';
+        document.title = '<?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
+        setLockCookie();
+        window.addEventListener('scroll', setLockCookie);
+        window.addEventListener('mousemove', setLockCookie);
+        window.addEventListener('mousedown', setLockCookie);
+        window.addEventListener('keypress', setLockCookie);
+        lockDown();
+      }
+      if (document.getElementById('lock_s'))
+        document.head.removeChild(document.getElementById('lock_s'));
+    }
+  }
+  xhr.send('p='+p);
 }
 if (<?php echo (isset($cache) && $cache ? '##LOCKDOWN##' : (isset($passcode) && $passcode !== '' ? 1 : 0)); ?>) {
   if (!lockDown()) {
@@ -778,10 +804,11 @@ document.addEventListener('gesturestart', function (e) {
 
 <?php
 if (isset($cache) && $cache) {
-  $output = ob_get_contents();
+  $html = ob_get_contents();
   ob_clean();
-  file_put_contents($cache_file, $output);
-  echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), $output);
+  $html = str_replace(array('##PRELOAD##'), array((isset($output['preload']) && $output['preload'] ? $output['preload'] : '')), $html);
+  file_put_contents($cache_file, $html);
+  echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), $html);
   if (isset($_SESSION['lock']))
     unset($_SESSION['lock']);
   ob_end_flush();
