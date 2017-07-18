@@ -227,6 +227,10 @@ a:visited{color:#0000cc;}
 a:hover{color:red;}
 input[type="submit"]:hover,label:hover{cursor:pointer;}
 input[type="radio"],input[type="checkbox"]{margin:0 5px 2px 0;vertical-align:middle;}
+input[type="submit"],input[type="text"],input[type="password"]{appearance:none;-moz-appearance:none;-webkit-appearance:none;border-radius:0;-moz-border-radius:0;-webkit-border-radius:0;}
+input[type="text"],input[type="password"]{border:1px solid #999;padding:0 3px;margin:0;font-size:14px;line-height:2em;}
+input[type="submit"]{border:1px solid #4285f1;margin:0;padding:1px 8px;background:#4285f1;color:#fff;}
+input[type="submit"]:hover{background:#d42;border-color:#d42;}
 select{height:2em;}
 body,#main{padding:0;margin:0;}
 #wrap{padding:0 10px;}
@@ -235,7 +239,7 @@ body,#main{padding:0;margin:0;}
 #addform{position:fixed;top:0;left:0;z-index:10;width:100%;background:white;box-shadow:0 2px 2px #000;padding:0px;margin:0;}
 #addform form{padding:10px 10px;}
 #addform form input[type="text"]{width:50%;margin-right:5px;}
-#addform form input[type="submit"]{margin-right:5px;padding:4px 5px 5px;}
+#addform form input[type="submit"]{margin-right:5px;}
 #addform form input[type="radio"]{margin-left:8px;}
 #addform form select{margin-left:5px;}
 #advance{display:inline-block;padding:0;margin:0;}
