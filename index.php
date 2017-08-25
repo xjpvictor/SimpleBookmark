@@ -433,8 +433,8 @@ if (!$auth) {
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
 <form method="POST" action="javascript:void(0);" onSubmit="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
-<input id="passcode" type="password" autofocus>
-<input type="submit" value="Unlock">
+<input id="passcode" type="password" tabindex="1" autofocus>
+<input type="submit" value="Unlock" tabindex="2">
 </form>
 </div>
 <div id="foot">
@@ -460,6 +460,7 @@ function lockDown() {
     window.removeEventListener("mousedown", setLockCookie);
     window.removeEventListener("keypress", setLockCookie);
     document.title = 'Locked | <?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
+    document.getElementById('passcode').focus();
     return true;
   } else {
     setTimeout("lockDown()", 60000);
