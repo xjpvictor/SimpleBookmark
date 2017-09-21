@@ -113,7 +113,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
 <span class="entry'.(!$allow_edit ? ' sync' : '').'"'.($allow_edit ? ' id="entry-'.$level.'_'.$entry['id'].'"' : '').' style="display:block;" data-id="'.$level.'_'.$entry['id'].'">
 <h3 class="folder_title touchOver" style="display:block;" data-id="'.$level.'_'.$entry['id'].'">
 <span class="target touchOver'.(!$allow_edit ? ' noedit' : '').'"'.($allow_edit ? ' id="target-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').'>
-<span class="folder_title_name touchOver"'.($allow_edit ? ' onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
+<span class="folder_title_name search touchOver"'.($allow_edit ? ' onclick="document.getElementById(\'search\').value=\'\';searchStrFunction();location.href=\'index.php#'.$level.'_'.$entry['id'].'\';" id="title-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'"' : '').' data-type="folder">&raquo;&nbsp;'.$entry['name'].'</span>
 <span class="move"'.($allow_edit ? ' id="move-'.$level.'_'.$entry['id'].'" data-id="'.$level.'_'.$entry['id'].'" draggable="true" onclick="toggleShow(\'folder-wrap-'.$level.'_'.$entry['id'].'\');"' : '').'></span>
 '.($allow_edit ? '<a class="edit" href="javascript:;" onclick="toggleShow(\'entry-'.$level.'_'.$entry['id'].'\');toggleShow(\'editform-'.$level.'_'.$entry['id'].'\')">Edit</a>
 '.(isset($entry['cache']) && $entry['cache'] ? '<span class="cache">Cache enabled</span>' : '').'

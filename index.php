@@ -387,7 +387,7 @@ if (!$auth) {
   echo '<div id="addform">'."\n";
   echo '<p id="logout"><a href="index.php?action=logout">Log out</a></p>';
   echo '<form action="index.php?action=add" method="post">'."\n";
-  echo '<input type="text" required name="u" id="search" onkeydown="getStr(event);" onkeyup="searchStr();">'."\n";
+  echo '<input type="text" required name="u" id="search" onkeyup="getStr(event);">'."\n";
   echo '<input type="submit" value="Add">'."\n";
   echo '<p id="advance"><a href="javascript:;" onclick="toggleShow(\'addform-more\');">Advance</a></p>'."\n";
   echo '<div id="addform-more" style="display:none;">'."\n";
@@ -665,7 +665,7 @@ document.getElementById('addform').addEventListener('dragover', dragScrollFunc, 
 document.getElementById('addform').addEventListener('dragleave', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 document.getElementById('addform').addEventListener('drop', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 // Search
-var searchTimeout='';
+var searchTimeout;
 function getStr(event) {
   clearTimeout(searchTimeout);
   if (event.keyCode === 27) {
@@ -680,15 +680,16 @@ function getStr(event) {
       event.stopPropagation();
     }
     return false;
-  } else if (document.getElementById('search').value) {
-    var entries=document.getElementsByClassName('entry');
-    for(i=0;i<entries.length;i++) {
-      var id=entries[i].getAttribute('data-id');
-      if(!entries[i].classList.contains('sync')) {
-        document.getElementById('entry-' + id).style.display='block';
-        document.getElementById('editform-' + id).style.display='none';
-      }
-    }
+  } else {
+    searchStr();
+  //  var entries=document.getElementsByClassName('entry');
+  //  for(i=0;i<entries.length;i++) {
+  //    var id=entries[i].getAttribute('data-id');
+  //    if(!entries[i].classList.contains('sync')) {
+  //      document.getElementById('entry-' + id).style.display='block';
+  //      document.getElementById('editform-' + id).style.display='none';
+  //    }
+  //  }
   }
 }
 function searchStrFunction() {
@@ -729,6 +730,13 @@ function searchStrFunction() {
             level=parentId;
           }
         }
+      } else {
+        if (text.indexOf(searchtext)=='-1') {
+          document.getElementById(id).classList.add('hide');
+        } else {
+          document.getElementById(id).classList.remove('hide');
+          showFolders+=','+id+'_';
+        }
       }
     }
     var titles=document.getElementsByClassName('folder_title_name');
@@ -748,7 +756,7 @@ function searchStrFunction() {
   }
 }
 function searchStr() {
-  searchTimeout=setTimeout(searchStrFunction, 100);
+  searchTimeout=setTimeout(searchStrFunction, 500);
 }
 </script>
 <?php
