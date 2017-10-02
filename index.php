@@ -217,6 +217,10 @@ if ($auth)
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="apple-touch-icon" href="webapp-icon.png" />
 <link rel="icon" href="webapp-icon.png" />
+
+<meta name="apple-mobile-web-app-title" content="Bookmarks" />
+<meta name="application-name" content="Bookmarks" />
+
 <style type="text/css" media="all">
 <!--
 html, body, div, span, h1, p, a, img, b, u, i, ol, ul, li, table, tr, td, input{font-family:"Lucida Sans Unicode","Lucida Grande","Noto Sans",Helvetica,Arial,sans-serif !important;font-size:14px;line-height:23px;}
