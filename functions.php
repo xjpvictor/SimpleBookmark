@@ -568,6 +568,7 @@ function download_item($id, $url) {
     require $lib_dir.'readability/Readability.inc.php';
     if (!function_exists('url_to_absolute'))
       include($lib_dir.'url_to_absolute.php');
+    $body = preg_replace(array('/<body(\s+[^>]*)?>/si', '/<\/body\s*>/si'), array('<body><div class="article-body"><p></p>', '</div></body>'), $body);
     $Readability = new Readability($body, 'utf8');
     $ReadabilityData = $Readability->getContent();
     $body = '<h1>'.$ReadabilityData['title'].'</h1>'.$ReadabilityData['content'];
