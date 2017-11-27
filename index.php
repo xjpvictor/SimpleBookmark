@@ -217,6 +217,7 @@ if ($auth)
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="apple-touch-icon" href="webapp-icon.png" />
 <link rel="icon" href="webapp-icon.png" />
+<link rel="mask-icon" href="website-icon.svg" color="#FF0000" />
 
 <meta name="apple-mobile-web-app-title" content="Bookmarks" />
 <meta name="application-name" content="Bookmarks" />
