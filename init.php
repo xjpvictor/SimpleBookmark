@@ -49,7 +49,7 @@ if (isset($_POST['p']) && password_verify($_POST['p'], $password)) {
   session_regenerate_id(true);
   $_SESSION['auth'] = 1;
   if (isset($_GET['action']) && $_GET['action'] == 'login') {
-    setcookie('_spbkmk_bookmark_lock', microtime(), 31536000, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
+    setcookie('_spbkmk_bookmark_lock', microtime(), time() + 31536000, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
     header('Location: index.php');
     exit;
   }
