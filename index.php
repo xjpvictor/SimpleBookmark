@@ -437,10 +437,8 @@ if (!$auth) {
 </div> <!-- End of main -->
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
-<form method="POST" action="javascript:void(0);" onSubmit="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
-<input id="passcode" type="password" tabindex="1" autofocus>
-<input type="submit" value="Unlock" tabindex="2">
-</form>
+<input id="passcode" type="password" tabindex="1" autofocus onKeypress="if((window.event ? event.keyCode : (event.which ? event.which : false))=='13'){var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';}">
+<input type="submit" value="Unlock" tabindex="2" onClick="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
 </div>
 <div id="foot">
 <script>
