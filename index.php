@@ -28,9 +28,9 @@ if ($auth) {
     case 'delete':
       if (isset($_GET['id']) && $_GET['id']) {
         if (isset($_GET['mode']) && $_GET['mode'] == 'sync') {
-          $entry = delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
+          delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
         } else {
-          $entry = delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
+          delete_bookmark($_GET['id'], (isset($_GET['items']) ? $_GET['items'] : 0), $bookmark_json);
           $anchor = substr($_GET['id'], 0, strrpos($_GET['id'], '_'));
         }
       }
@@ -39,7 +39,7 @@ if ($auth) {
       if (isset($_GET['u']) && $_GET['u']) {
         if (isset($_GET['id']) && $_GET['id']) {
           $url = urldecode($_GET['u']);
-          $entry = delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
+          delete_bookmark($_GET['id'], 0, $sync_json, $sync_file_prefix, 0);
           header('Location: '.$url);
           exit;
         }
@@ -89,7 +89,7 @@ if ($auth) {
         if (($entry = edit_bookmark($_GET['id'], $update, $bookmark_json))) {
           $l = ($_POST['l'] == '_0' ? '' : $_POST['l']);
           if (isset($_POST['l']) && $l.'_'.$entry['id'] !== $_GET['id']) {
-            $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
+            delete_bookmark($_GET['id'], 1, $bookmark_json);
             move_bookmark($entry, $l.'_0', $bookmark_json);
           }
           $anchor = $l.'_'.$entry['id'];
@@ -99,8 +99,10 @@ if ($auth) {
     case 'move':
       if (isset($_GET['id']) && $_GET['id']) {
         $entry = delete_bookmark($_GET['id'], 1, $bookmark_json);
-        move_bookmark($entry, $_GET['position'], $bookmark_json);
-        $anchor = substr($_GET['position'], 0, strrpos($_GET['position'], '_')).'_'.$entry['id'];
+        if ($entry) {
+          move_bookmark($entry, $_GET['position'], $bookmark_json);
+          $anchor = substr($_GET['position'], 0, strrpos($_GET['position'], '_')).'_'.$entry['id'];
+        }
       }
       break;
     case 'sort':

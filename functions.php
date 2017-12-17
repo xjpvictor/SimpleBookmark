@@ -62,7 +62,7 @@ function output_bookmarks_recursive($bookmarks, $allow_edit, $deduplicate, $chec
         if (!isset($entry['hash']))
           $entry['hash'] = sha1($entry['url']);
         if ($deduplicate && is_array($deduplicate) && isset($deduplicate[$entry['hash']]))
-          $entry = delete_bookmark(($level ? $level : 0).'_'.$entry['id'], 0, $bookmark_json, $cache_prefix, $update_status);
+          delete_bookmark(($level ? $level : 0).'_'.$entry['id'], 0, $bookmark_json, $cache_prefix, $update_status);
         else {
           if ($deduplicate) {
             if (is_array($deduplicate))
@@ -281,18 +281,20 @@ function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = 
   if (isset($data[2]) && !empty($data[2]))
     $bookmark[0]['entries'] = array_merge($bookmark[0]['entries'], $data[2]);
   file_put_contents($bookmark_json, json_encode($bookmark), LOCK_EX);
-  $files = glob($content_dir.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
-  if ($files) {
-    foreach ($files as $file) {
-      if (file_exists($file))
-        unlink($file);
+  if ($data[1] && isset($data[1]['id'])) {
+    $files = glob($content_dir.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
+    if ($files) {
+      foreach ($files as $file) {
+        if (file_exists($file))
+          unlink($file);
+      }
     }
-  }
-  $files = glob($cache_dir.$preview_filename_prefix.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
-  if ($files) {
-    foreach ($files as $file) {
-      if (file_exists($file))
-        unlink($file);
+    $files = glob($cache_dir.$preview_filename_prefix.$cache_prefix.$data[1]['id'].'-*', GLOB_NOSORT);
+    if ($files) {
+      foreach ($files as $file) {
+        if (file_exists($file))
+          unlink($file);
+      }
     }
   }
   return $data[1];
@@ -300,10 +302,13 @@ function delete_bookmark($id, $delete_contents, $bookmark_json, $cache_prefix = 
 
 function delete_bookmark_callback($bookmark, $parameters) {
   $id = $parameters[0];
-  $entry = $bookmark['entries']['_'.$id];
-  unset($bookmark['entries']['_'.$id]);
-  if ($entry['type'] == 'folder' && isset($parameters[1]) && !$parameters[1] && isset($entry['entries']) && !empty($entry['entries']))
-    $contents = $entry['entries'];
+  if (isset($bookmark['entries']['_'.$id])) {
+    $entry = $bookmark['entries']['_'.$id];
+    unset($bookmark['entries']['_'.$id]);
+    if ($entry['type'] == 'folder' && isset($parameters[1]) && !$parameters[1] && isset($entry['entries']) && !empty($entry['entries']))
+      $contents = $entry['entries'];
+  } else
+    $entry = false;
   return ((isset($contents) ? array($bookmark, $entry, $contents) : array($bookmark, $entry)));
 }
 
