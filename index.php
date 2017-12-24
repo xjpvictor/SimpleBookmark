@@ -304,8 +304,8 @@ a.url-checker{color:#4caf50;font-size:1em;margin-right:8px;}
 .last-access-time:not(:empty):before{content:'Last checked at ';}
 .last-access-code:before{content:'(';}
 .last-access-code:after{content:')';}
-#rightbottom{position:fixed;right:0px;bottom:0px;z-index:999;width:30px;background-color:transparent;height:60px;color:#fff;padding:0;margin:0;}
-#totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#000;text-align:center;padding:0;margin:0;display:inline-block;}
+#rightbottom{position:fixed;right:0px;bottom:50%;z-index:999;width:30px;background-color:transparent;height:60px;color:#fff;padding:0;margin:0;}
+#totop,#tobottom{width:30px;height:30px;font-size:20px;line-height:30px;color:#000;text-align:center;padding:0;margin:0;display:inline-block;font-family:arial !important;}
 #totop:hover,#tobottom:hover{color:#444;}
 #foot{padding:0 10px 20px;}
 #foot p{color:#666;}
