@@ -117,8 +117,6 @@ if ($auth) {
       exit;
     case 'preview':
       if (isset($_GET['id']) && $_GET['id'] && isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
-        ob_end_clean();
-        ob_start();
         header('Content-Type: image/jpeg');
         header('Cache-Control: max-age='.$preview_file_life.', public');
         header("Pragma: cache");
@@ -133,16 +131,6 @@ if ($auth) {
             http_response_code(404);
         } else
           http_response_code(404);
-
-        $size=ob_get_length();
-        header("Content-Length: $size");
-        header("Connection: close");
-        ob_end_flush();
-        flush();
-        if (function_exists('fastcgi_finish_request'))
-          fastcgi_finish_request();
-        if (session_id())
-          session_write_close();
 
         if (!file_exists($preview_file)) {
           $ch = curl_init();
@@ -165,6 +153,7 @@ if ($auth) {
           curl_close($ch);
 
           if ($header['http_code'] == 200 && substr($header['content_type'], 0, 6) == 'image/' && $body) {
+            http_response_code(200);
             file_put_contents($preview_file, $body);
             if (extension_loaded('gd')) {
               createthumbnail($preview_file, $preview_height);
@@ -294,7 +283,7 @@ form.save select:not(:focus){border:none;font-size:14px;color:#4caf50;background
 .editform select{margin-right:15px;}
 p.sort{margin-top:8px;padding-bottom:8px;border-bottom:1px solid #999;}
 .hide{display:none !important;}
-.preview{vertical-align:middle;margin-right:5px;}
+.preview{vertical-align:middle;margin-right:5px;max-width:20px;}
 a.url.not-found.show-not-found{color:#fff;background:#d42;padding-left:5px;padding-right:5px;}
 .not-found .preview{display:none;}
 .last-access{display:block;color:#999;font-size:.9em;margin:8px 0;min-height:1px;}
@@ -460,6 +449,7 @@ function lockDown() {
   t = getCookie('_spbkmk_bookmark_lock');
   if (t && Date.now() - t >= 600000) {
     document.getElementById('lock').style.display='block';
+    document.getElementById('main').innerHTML='';
     window.removeEventListener("scroll", setLockCookie);
     window.removeEventListener("mousemove", setLockCookie);
     window.removeEventListener("mousedown", setLockCookie);
@@ -479,17 +469,16 @@ function lockUnlock(p) {
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
       if (xhr.status == 200) {
-        document.getElementById('lock').style.display='none';
-        document.title = '<?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
+        //document.getElementById('lock').style.display='none';
+        //document.title = '<?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
         setLockCookie();
-        window.addEventListener('scroll', setLockCookie);
-        window.addEventListener('mousemove', setLockCookie);
-        window.addEventListener('mousedown', setLockCookie);
-        window.addEventListener('keypress', setLockCookie);
-        lockDown();
+        window.location='index.php';
+        //window.addEventListener('scroll', setLockCookie);
+        //window.addEventListener('mousemove', setLockCookie);
+        //window.addEventListener('mousedown', setLockCookie);
+        //window.addEventListener('keypress', setLockCookie);
+        //lockDown();
       }
-      if (document.getElementById('lock_s'))
-        document.head.removeChild(document.getElementById('lock_s'));
     }
   }
   xhr.send('p='+p);

@@ -691,6 +691,9 @@ function createthumbnail($source_file, $height) {
   case 'vnd.wap.wbmp':
     $simg = imagecreatefromwbmp($source_file);
     break;
+  case 'webp':
+    $simg = imagecreatefromwebp($source_file);
+    break;
   }
   if (!isset($simg) || !$simg)
     return false;
