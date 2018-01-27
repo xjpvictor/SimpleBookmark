@@ -66,7 +66,7 @@ if ($auth) {
         } else {
           if (isset($_GET['url']) && ($url = urldecode($_GET['url']))) {
             if (($file = download_item($_GET['id'], $url)))
-              $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file['file_name'], 'downloadable' => $file['downloadable'], 'preview' => $file['preview'])), $bookmark_json);
+              $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('offline' => $file['file_name'], 'downloadable' => $file['header']['downloadable'], 'preview' => $file['header']['preview'])), $bookmark_json);
             else
               $entry = edit_bookmark($_GET['level'].'_'.$_GET['id'], array('meta' => array('downloadable' => 0, 'preview' => 0)), $bookmark_json);
           }
