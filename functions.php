@@ -23,9 +23,10 @@ function escattr($match) {
 }
 
 function auth($expire = null) {
+  global $cookie_name;
   if (isset($expire))
     session_set_cookie_params($expire, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
-  session_name('_spbkmk_bookmark_');
+  session_name($cookie_name);
   session_save_path(__DIR__ . '/session');
   if (session_status() !== PHP_SESSION_ACTIVE)
     session_start();
@@ -34,6 +35,7 @@ function auth($expire = null) {
     if (isset($_COOKIE['_spbkmk_bookmark_notRobot']) && $_COOKIE['_spbkmk_bookmark_notRobot'] == 1)
       $_SESSION['robot'] = 0;
     else {
+      setcookie($cookie_name, '', 1, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
       session_destroy();
       return false;
     }
@@ -620,47 +622,49 @@ h1{font-size:2em;line-height:1.2em;}
   }
 }
 
-function imagecreatefrombmp($p_sFile) {
-  $file = fopen($p_sFile, "rb");
-  $read = fread($file, 10);
-  while (!feof($file) && ($read<>""))
-    $read .= fread($file, 1024);
-  $temp = unpack("H*", $read);
-  $hex = $temp[1];
-  $header = substr($hex, 0, 108);
-  if (substr($header, 0, 4) == "424d") {
-    $header_parts = str_split($header, 2);
-    $width = hexdec($header_parts[19].$header_parts[18]);
-    $height = hexdec($header_parts[23].$header_parts[22]);
-    unset($header_parts);
-  }
-  $x = 0;
-  $y = 1;
-  $image = imagecreatetruecolor($width, $height);
-  imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
-  $body = substr($hex, 108);
-  $body_size = (strlen($body) / 2);
-  $header_size = ($width * $height);
-  $usePadding = ($body_size > ($header_size * 3) + 4);
-  for ($i = 0; $i < $body_size; $i += 3) {
-    if ($x >= $width) {
-      if ($usePadding)
-        $i += $width % 4;
-      $x = 0;
-      $y++;
-      if ($y > $height)
-        break;
+if (!function_exists('imagecreatefrombmp')) {
+  function imagecreatefrombmp($p_sFile) {
+    $file = fopen($p_sFile, "rb");
+    $read = fread($file, 10);
+    while (!feof($file) && ($read<>""))
+      $read .= fread($file, 1024);
+    $temp = unpack("H*", $read);
+    $hex = $temp[1];
+    $header = substr($hex, 0, 108);
+    if (substr($header, 0, 4) == "424d") {
+      $header_parts = str_split($header, 2);
+      $width = hexdec($header_parts[19].$header_parts[18]);
+      $height = hexdec($header_parts[23].$header_parts[22]);
+      unset($header_parts);
     }
-    $i_pos = $i * 2;
-    $r = hexdec($body[$i_pos + 4].$body[$i_pos + 5]);
-    $g = hexdec($body[$i_pos + 2].$body[$i_pos + 3]);
-    $b = hexdec($body[$i_pos].$body[$i_pos + 1]);
-    $color = imagecolorallocate($image, $r, $g, $b);
-    imagesetpixel($image, $x, $height - $y, $color);
-    $x++;
+    $x = 0;
+    $y = 1;
+    $image = imagecreatetruecolor($width, $height);
+    imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+    $body = substr($hex, 108);
+    $body_size = (strlen($body) / 2);
+    $header_size = ($width * $height);
+    $usePadding = ($body_size > ($header_size * 3) + 4);
+    for ($i = 0; $i < $body_size; $i += 3) {
+      if ($x >= $width) {
+        if ($usePadding)
+          $i += $width % 4;
+        $x = 0;
+        $y++;
+        if ($y > $height)
+          break;
+      }
+      $i_pos = $i * 2;
+      $r = hexdec($body[$i_pos + 4].$body[$i_pos + 5]);
+      $g = hexdec($body[$i_pos + 2].$body[$i_pos + 3]);
+      $b = hexdec($body[$i_pos].$body[$i_pos + 1]);
+      $color = imagecolorallocate($image, $r, $g, $b);
+      imagesetpixel($image, $x, $height - $y, $color);
+      $x++;
+    }
+    unset($body);
+    return $image;
   }
-  unset($body);
-  return $image;
 }
 
 function createthumbnail($source_file, $height) {

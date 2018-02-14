@@ -81,7 +81,8 @@ if (!$urls)
   exit;
 
 if (!isset($_GET[($h = hash('md5', $_SERVER['SCRIPT_FILENAME']))]) || $_GET[$h] != '1') {
-  ob_end_clean();
+  if (ob_get_level())
+    ob_end_clean();
   ob_start();
   header('HTTP/1.1 200 Ok');
   header('Content-Type: application/javascript');

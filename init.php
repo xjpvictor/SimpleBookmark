@@ -28,6 +28,8 @@ if (@filemtime($config_file) && function_exists('opcache_invalidate'))
   opcache_invalidate($config_file,true);
 include($config_file);
 
+$cookie_name = '_spbkmk_bookmark_';
+
 include(__DIR__ . '/functions.php');
 
 $site_name = ($site_name ? $site_name : 'My Bookmarks');

@@ -6,6 +6,7 @@ if ($auth) {
   if (isset($_GET['action'])) {
     switch ($_GET['action']) {
     case 'logout':
+      setcookie($cookie_name, '', 1, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
       session_destroy();
       break;
     case 'add':
@@ -368,7 +369,8 @@ if (!$auth) {
 
   $cache_file = $cache_dir.'index.html';
   if ($cache && file_exists($cache_file) && filemtime($cache_file) >= filemtime($bookmark_json)) {
-    ob_end_clean();
+    if (ob_get_level())
+      ob_end_clean();
     echo str_replace(array('##LOCKDOWN##', '##SYNCLIST##'), array((isset($passcode) && $passcode !== '' ? 1 : 0), $sync_output), file_get_contents($cache_file));
     exit;
   }
