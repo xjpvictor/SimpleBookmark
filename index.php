@@ -385,7 +385,7 @@ if (!$auth) {
   echo '<div id="addform">'."\n";
   echo '<p id="logout"><a href="index.php?action=logout">Log out</a></p>';
   echo '<form action="index.php?action=add" method="post">'."\n";
-  echo '<input type="text" required name="u" id="search" onkeyup="getStr(event);">'."\n";
+  echo '<input type="text" required name="u" id="search" onkeyup="getStr(event);" onkeydown="getStr(event, 0);">'."\n";
   echo '<input type="submit" value="Add">'."\n";
   echo '<p id="advance"><a href="javascript:;" onclick="toggleShow(\'addform-more\');">Advance</a></p>'."\n";
   echo '<div id="addform-more" style="display:none;">'."\n";
@@ -419,7 +419,7 @@ if (!$auth) {
   echo $output['url'];
   echo '<span class="target touchOver" id="target-_0" data-id="_0">&nbsp;</span>'."\n";
   echo '</div>'."\n";
-  echo '</div></div>'."\n";
+  echo '</div><p id="search-noresult" class="hide">No bookmark found</p></div>'."\n";
 }
 ?>
 
@@ -683,13 +683,19 @@ document.getElementById('addform').addEventListener('dragleave', function(){clea
 document.getElementById('addform').addEventListener('drop', function(){clearInterval(dragScrollTimer);dragScroll = 0;}, false);
 // Search
 var searchTimeout;
-function getStr(event) {
+var searchStrValue = '';
+var elemSearch = document.getElementById('search');
+var elemFolderWrap = document.getElementById('folder-wrap');
+var elemns=document.getElementById('search-noresult');
+var head = document.head || document.getElementsByTagName('head')[0];
+var styleId = 'searchStyle';
+function getStr(event, keyup = 1) {
   clearTimeout(searchTimeout);
   if (event.keyCode === 27) {
-    document.getElementById('search').value='';
-    document.getElementById('search').blur();
+    elemSearch.value='';
+    elemSearch.blur();
     searchStr(0);
-  } else if (event.keyCode === 13) {
+  } else if (keyup && event.keyCode === 13) {
     if (event.preventDefault) {
       event.preventDefault();
     }
@@ -697,36 +703,73 @@ function getStr(event) {
       event.stopPropagation();
     }
     return false;
-  } else {
+  } else if (keyup) {
     searchStr();
   }
 }
+var links=document.getElementsByClassName('search');
+var titles=document.getElementsByClassName('folder_title_name');
+var elemSync = document.getElementById('sync');
+var elemEntrySync = document.getElementById('entry-sync');
+var elemMyBookmarks = document.getElementById('mybookmarks');
+var elemTarget0 = document.getElementById('target-_0');
 function searchStrFunction(t = 0) {
-  if (document.getElementById('search').disabled == false) {
-    document.getElementById('search').classList.add('disabled');
-    document.getElementById('search').disabled=true;
-    var str=document.getElementById('search').value;
+  if (elemSearch.disabled == false && searchStrValue != elemSearch.value) {
+    searchStrValue = elemSearch.value;
+    elemSearch.classList.add('disabled');
+    elemSearch.disabled=true;
+    var str=elemSearch.value;
     var searchtext=(str ? str.toLowerCase() : '');
     var showFolders='', level='';
-    var head = document.head || document.getElementsByTagName('head')[0];
-    var styleId = 'searchStyle';
-    var css = '.searchHide{display:none !important;};';
 
     setTimeout(function() {
       if (!searchtext) {
-        document.getElementById('sync').style.display='block';
-        document.getElementById('entry-sync').style.display='block';
-        document.getElementById('mybookmarks').style.display='block';
-        document.getElementById('target-_0').style.display='block';
-        if (typeof(document.getElementById(styleId)) != 'undefined' && document.getElementById(styleId) !== null)
-          document.getElementById(styleId).parentNode.removeChild(document.getElementById(styleId));
+        elemSync.style.display='block';
+        elemEntrySync.style.display='block';
+        elemMyBookmarks.style.display='block';
+        elemTarget0.style.display='block';
+        if (typeof((e = document.getElementById(styleId))) != 'undefined' && e !== null)
+          e.parentNode.removeChild(e);
       } else {
-        document.getElementById('sync').style.display='none';
-        document.getElementById('entry-sync').style.display='none';
-        document.getElementById('mybookmarks').style.display='none';
-        document.getElementById('target-_0').style.display='none';
-        if (typeof(document.getElementById(styleId)) != 'undefined' && document.getElementById(styleId) !== null)
-          document.getElementById(styleId).innerHTML=css;
+        elemSync.style.display='none';
+        elemEntrySync.style.display='none';
+        elemMyBookmarks.style.display='none';
+        elemTarget0.style.display='none';
+        var css='';
+        for(i=0;i<links.length;i++) {
+          var link=links[i];
+          var id=link.getAttribute('data-id');
+          var type=link.getAttribute('data-type');
+          if (type=='url') {
+            var href=link.getAttribute('href').toLowerCase();
+            if (link.dataset.search.indexOf(searchtext)=='-1') {
+              css += '#entry-'+id+'{display:none !important;}'+"\n";
+            } else {
+              css += '#entry-'+id+'{display:block !important;}'+"\n";
+              var parentId=link.getAttribute('data-level');
+              if(level !== parentId){
+                showFolders+=','+parentId;
+                level=parentId;
+              }
+            }
+          } else {
+            if (link.dataset.search.indexOf(searchtext)=='-1') {
+              css += '#'+id+'{display:none !important;}'+"\n";
+            } else {
+              css += '#'+id+'{display:block !important;}'+"\n";
+              showFolders+=','+id+'_';
+            }
+          }
+        }
+        for(i=0;i<titles.length;i++) {
+          var id=titles[i].getAttribute('data-id');
+          if (showFolders.indexOf(','+id+'_')=='-1')
+            css += '#'+id+'{display:none !important;}'+"\n";
+          else
+            css += '#'+id+'{display:block !important;}'+"\n";
+        }
+        if (typeof((e = document.getElementById(styleId))) != 'undefined' && e !== null)
+          e.innerHTML=css;
         else {
           var style = document.createElement('style');
           style.type = 'text/css';
@@ -738,58 +781,24 @@ function searchStrFunction(t = 0) {
           }
           head.appendChild(style);
         }
-        var links=document.getElementsByClassName('search');
-        for(i=0;i<links.length;i++) {
-          var link=links[i];
-          var id=link.getAttribute('data-id');
-          var type=link.getAttribute('data-type');
-          var elem=document.getElementById('entry-' + id);
-          var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
-          if (type=='url') {
-            var href=link.getAttribute('href').toLowerCase();
-            if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
-              elem.classList.add('searchHide');
-            } else {
-              elem.classList.remove('searchHide');
-              var parentId=link.getAttribute('data-level');
-              if(level !== parentId){
-                showFolders+=','+parentId;
-                level=parentId;
-              }
-            }
-          } else {
-            if (text.indexOf(searchtext)=='-1') {
-              document.getElementById(id).classList.add('searchHide');
-            } else {
-              document.getElementById(id).classList.remove('searchHide');
-              showFolders+=','+id+'_';
-            }
-          }
-        }
-        var titles=document.getElementsByClassName('folder_title_name');
-        for(i=0;i<titles.length;i++) {
-          var id=titles[i].getAttribute('data-id');
-          if (showFolders.indexOf(','+id+'_')=='-1')
-            document.getElementById(id).classList.add('searchHide');
-          else
-            document.getElementById(id).classList.remove('searchHide');
-        }
       }
 
-      if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
-        document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
-      } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
-        elemns.parentNode.removeChild(elemns);
+      var h=elemFolderWrap.offsetHeight;
+      var hn = elemns.offsetHeight;
+      if (h == 0 && hn == 0) {
+        elemns.classList.remove('hide');
+      } else if (h != 0 && hn) {
+        elemns.classList.add('hide');
       }
-      document.getElementById('search').disabled=false;
-      document.getElementById('search').classList.remove('disabled');
+      elemSearch.disabled=false;
+      elemSearch.classList.remove('disabled');
       if (t > 0) {
-        document.getElementById('search').focus();
+        elemSearch.focus();
       }
     }, (t > 0 ? 10 : 0));
   }
 }
-function searchStr(t = 1000) {
+function searchStr(t = 500) {
   searchTimeout=setTimeout(searchStrFunction, t, t);
 }
 </script>
