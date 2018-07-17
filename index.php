@@ -238,6 +238,7 @@ body,#main{padding:0;margin:0;}
 #addform form input[type="submit"]{margin-right:5px;}
 #addform form input[type="radio"]{margin-left:8px;}
 #addform form select{margin-left:5px;}
+#search.disabled{background:#eee;color:#aaa;}
 #advance{display:inline-block;padding:0;margin:0;}
 #content{padding:60px 10px 10px;}
 .entry:before{display:block;content:" ";margin-top:-70px;height:70px;visibility:hidden;}
@@ -687,7 +688,7 @@ function getStr(event) {
   if (event.keyCode === 27) {
     document.getElementById('search').value='';
     document.getElementById('search').blur();
-    searchStr();
+    searchStr(0);
   } else if (event.keyCode === 13) {
     if (event.preventDefault) {
       event.preventDefault();
@@ -698,81 +699,98 @@ function getStr(event) {
     return false;
   } else {
     searchStr();
-  //  var entries=document.getElementsByClassName('entry');
-  //  for(i=0;i<entries.length;i++) {
-  //    var id=entries[i].getAttribute('data-id');
-  //    if(!entries[i].classList.contains('sync')) {
-  //      document.getElementById('entry-' + id).style.display='block';
-  //      document.getElementById('editform-' + id).style.display='none';
-  //    }
-  //  }
   }
 }
-function searchStrFunction() {
-  var str=document.getElementById('search').value;
-  var searchtext=(str ? str.toLowerCase() : '');
-  var showFolders='', level='';
+function searchStrFunction(t = 0) {
+  if (document.getElementById('search').disabled == false) {
+    document.getElementById('search').classList.add('disabled');
+    document.getElementById('search').disabled=true;
+    var str=document.getElementById('search').value;
+    var searchtext=(str ? str.toLowerCase() : '');
+    var showFolders='', level='';
+    var head = document.head || document.getElementsByTagName('head')[0];
+    var styleId = 'searchStyle';
+    var css = '.searchHide{display:none !important;};';
 
-  if (!searchtext) {
-    document.getElementById('sync').style.display='block';
-    document.getElementById('entry-sync').style.display='block';
-    document.getElementById('mybookmarks').style.display='block';
-    document.getElementById('target-_0').style.display='block';
-    var entries=document.getElementsByClassName('hide');
-    for(i=entries.length-1;i>=0;i--) {
-      entries[i].classList.remove('hide');
-    }
-  } else {
-    document.getElementById('sync').style.display='none';
-    document.getElementById('entry-sync').style.display='none';
-    document.getElementById('mybookmarks').style.display='none';
-    document.getElementById('target-_0').style.display='none';
-    var links=document.getElementsByClassName('search');
-    for(i=0;i<links.length;i++) {
-      var link=links[i];
-      var id=link.getAttribute('data-id');
-      var type=link.getAttribute('data-type');
-      var elem=document.getElementById('entry-' + id);
-      var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
-      if (type=='url') {
-        var href=link.getAttribute('href').toLowerCase();
-        if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
-          elem.classList.add('hide');
-        } else {
-          elem.classList.remove('hide');
-          var parentId=link.getAttribute('data-level');
-          if(level !== parentId){
-            showFolders+=','+parentId;
-            level=parentId;
+    setTimeout(function() {
+      if (!searchtext) {
+        document.getElementById('sync').style.display='block';
+        document.getElementById('entry-sync').style.display='block';
+        document.getElementById('mybookmarks').style.display='block';
+        document.getElementById('target-_0').style.display='block';
+        if (typeof(document.getElementById(styleId)) != 'undefined' && document.getElementById(styleId) !== null)
+          document.getElementById(styleId).parentNode.removeChild(document.getElementById(styleId));
+      } else {
+        document.getElementById('sync').style.display='none';
+        document.getElementById('entry-sync').style.display='none';
+        document.getElementById('mybookmarks').style.display='none';
+        document.getElementById('target-_0').style.display='none';
+        if (typeof(document.getElementById(styleId)) != 'undefined' && document.getElementById(styleId) !== null)
+          document.getElementById(styleId).innerHTML=css;
+        else {
+          var style = document.createElement('style');
+          style.type = 'text/css';
+          style.id = styleId;
+          if (style.styleSheet){
+            style.styleSheet.cssText = css;
+          } else {
+            style.appendChild(document.createTextNode(css));
+          }
+          head.appendChild(style);
+        }
+        var links=document.getElementsByClassName('search');
+        for(i=0;i<links.length;i++) {
+          var link=links[i];
+          var id=link.getAttribute('data-id');
+          var type=link.getAttribute('data-type');
+          var elem=document.getElementById('entry-' + id);
+          var text=document.getElementById('title-' + id).innerHTML.toLowerCase();
+          if (type=='url') {
+            var href=link.getAttribute('href').toLowerCase();
+            if (href.indexOf(searchtext)=='-1' && text.indexOf(searchtext)=='-1') {
+              elem.classList.add('searchHide');
+            } else {
+              elem.classList.remove('searchHide');
+              var parentId=link.getAttribute('data-level');
+              if(level !== parentId){
+                showFolders+=','+parentId;
+                level=parentId;
+              }
+            }
+          } else {
+            if (text.indexOf(searchtext)=='-1') {
+              document.getElementById(id).classList.add('searchHide');
+            } else {
+              document.getElementById(id).classList.remove('searchHide');
+              showFolders+=','+id+'_';
+            }
           }
         }
-      } else {
-        if (text.indexOf(searchtext)=='-1') {
-          document.getElementById(id).classList.add('hide');
-        } else {
-          document.getElementById(id).classList.remove('hide');
-          showFolders+=','+id+'_';
+        var titles=document.getElementsByClassName('folder_title_name');
+        for(i=0;i<titles.length;i++) {
+          var id=titles[i].getAttribute('data-id');
+          if (showFolders.indexOf(','+id+'_')=='-1')
+            document.getElementById(id).classList.add('searchHide');
+          else
+            document.getElementById(id).classList.remove('searchHide');
         }
       }
-    }
-    var titles=document.getElementsByClassName('folder_title_name');
-    for(i=0;i<titles.length;i++) {
-      var id=titles[i].getAttribute('data-id');
-      if (showFolders.indexOf(','+id+'_')=='-1')
-        document.getElementById(id).classList.add('hide');
-      else
-        document.getElementById(id).classList.remove('hide');
-    }
-  }
 
-  if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
-    document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
-  } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
-    elemns.parentNode.removeChild(elemns);
+      if (document.getElementById('folder-wrap').offsetHeight == 0 && !document.getElementById('search-noresult')) {
+        document.getElementById('content').innerHTML+='<p id="search-noresult">No bookmark found</p>';
+      } else if (document.getElementById('folder-wrap').offsetHeight != 0 && (elemns=document.getElementById('search-noresult'))) {
+        elemns.parentNode.removeChild(elemns);
+      }
+      document.getElementById('search').disabled=false;
+      document.getElementById('search').classList.remove('disabled');
+      if (t > 0) {
+        document.getElementById('search').focus();
+      }
+    }, (t > 0 ? 10 : 0));
   }
 }
-function searchStr() {
-  searchTimeout=setTimeout(searchStrFunction, 500);
+function searchStr(t = 1000) {
+  searchTimeout=setTimeout(searchStrFunction, t, t);
 }
 </script>
 <?php
