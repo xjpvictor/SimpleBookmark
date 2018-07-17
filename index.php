@@ -130,10 +130,9 @@ if ($auth) {
             readfile($preview_file);
           } else
             http_response_code(404);
-        } else
-          http_response_code(404);
+        }
 
-        if (!file_exists($preview_file)) {
+        if (!file_exists($preview_file) || (!filesize($preview_file) && time() - filemtime($preview_file) >= 86400)) {
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL, $url);
           curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -777,7 +776,7 @@ function searchStr() {
 }
 </script>
 <?php
-if (file_exists($f = $data_dir . 'foot.php'))
+if (file_exists($f = $data_dir . '/foot.php'))
   include($f);
 
 if ($auth) {

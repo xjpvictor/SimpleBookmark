@@ -1,6 +1,6 @@
 .*
-/data/*
-/cache/*
-/session/*
+/data
+/cache
+/session
 !.gitkeep
 !.gitignore

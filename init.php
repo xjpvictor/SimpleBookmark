@@ -4,15 +4,24 @@ if ((isset($_SERVER["HTTP_X_PURPOSE"]) && strtolower($_SERVER["HTTP_X_PURPOSE"])
   exit;
 }
 
-if (!file_exists(($config_file = ($data_dir = __DIR__ . '/data/').'config.php')))
+$data_dir = __DIR__ . '/data';
+if (!file_exists($data_dir)) {
+  mkdir($data_dir);
+}
+
+$content_dir = $data_dir.'/contents';
+if (!file_exists($content_dir)) {
+  mkdir($content_dir);
+}
+
+if (!file_exists(($config_file = $data_dir.'/config.php')))
   exit('Please update "config.php" file according to "config.php-dist"');
 if (!function_exists('password_hash'))
   exit('Please update your php version >= 5.5.3');
 
 $curl_ua = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36';
-$bookmark_json = $data_dir.'bookmarks.json';
-$sync_json = $data_dir.'sync.json';
-$content_dir = $data_dir.'contents/';
+$bookmark_json = $data_dir.'/bookmarks.json';
+$sync_json = $data_dir.'/sync.json';
 $lib_dir = __DIR__.'/lib/';
 $cache_dir = __DIR__ . '/cache/';
 $preview_filename_prefix = 'preview-';
