@@ -471,15 +471,8 @@ function lockUnlock(p) {
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
       if (xhr.status == 200) {
-        //document.getElementById('lock').style.display='none';
-        //document.title = '<?php echo str_replace('\'', '\\\'', htmlentities($site_name)); ?>';
         setLockCookie();
         window.location='index.php';
-        //window.addEventListener('scroll', setLockCookie);
-        //window.addEventListener('mousemove', setLockCookie);
-        //window.addEventListener('mousedown', setLockCookie);
-        //window.addEventListener('keypress', setLockCookie);
-        //lockDown();
       }
     }
   }
@@ -496,6 +489,7 @@ if (<?php echo (isset($cache) && $cache ? '##LOCKDOWN##' : (isset($passcode) && 
   }
 }
 document.getElementById('main').style.display='block';
+
 function notRobot() {
   document.cookie = "_spbkmk_bookmark_notRobot=1;path=/";
   window.removeEventListener("scroll", notRobot);
@@ -722,6 +716,10 @@ function searchStrFunction(t = 0) {
     var searchtext=(str ? str.toLowerCase() : '');
     var showFolders='', level='';
 
+    if (typeof window.sessionStorage != 'undefined') {
+      window.sessionStorage['search'] = str;
+    }
+
     setTimeout(function() {
       if (!searchtext) {
         elemSync.style.display='block';
@@ -800,6 +798,10 @@ function searchStrFunction(t = 0) {
 }
 function searchStr(t = 500) {
   searchTimeout=setTimeout(searchStrFunction, t, t);
+}
+if (typeof elemSearch != 'undefined' && elemSearch !== null && typeof window.sessionStorage != 'undefined' && typeof window.sessionStorage['search'] != 'undefined' && window.sessionStorage['search'] !== null && window.sessionStorage['search']) {
+  elemSearch.value = window.sessionStorage['search'];
+  searchStrFunction();
 }
 </script>
 <?php
