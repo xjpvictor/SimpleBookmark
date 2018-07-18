@@ -450,6 +450,11 @@ function setLockCookie() {
 function lockDown() {
   t = getCookie('_spbkmk_bookmark_lock');
   if (t && Date.now() - t >= 600000) {
+
+    if (typeof window.sessionStorage != 'undefined' && typeof(e=document.getElementById('search')) != 'undefined' && e !== null) {
+      window.sessionStorage['search'] = e.value;
+    }
+
     document.getElementById('lock').style.display='block';
     document.getElementById('main').innerHTML='';
     window.removeEventListener("scroll", setLockCookie);
@@ -716,10 +721,6 @@ function searchStrFunction(t = 0) {
     var searchtext=(str ? str.toLowerCase() : '');
     var showFolders='', level='';
 
-    if (typeof window.sessionStorage != 'undefined') {
-      window.sessionStorage['search'] = str;
-    }
-
     setTimeout(function() {
       if (!searchtext) {
         elemSync.style.display='block';
@@ -801,6 +802,7 @@ function searchStr(t = 500) {
 }
 if (typeof elemSearch != 'undefined' && elemSearch !== null && typeof window.sessionStorage != 'undefined' && typeof window.sessionStorage['search'] != 'undefined' && window.sessionStorage['search'] !== null && window.sessionStorage['search']) {
   elemSearch.value = window.sessionStorage['search'];
+  window.sessionStorage['search'] = '';
   searchStrFunction();
 }
 </script>
