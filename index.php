@@ -228,6 +228,8 @@ input[type="text"],input[type="password"]{border:1px solid #999;padding:0 3px;ma
 input[type="submit"]{border:1px solid #4285f1;margin:0;padding:1px 8px;background:#4285f1;color:#fff;}
 input[type="submit"]:hover{background:#d42;border-color:#d42;}
 select{height:2em;}
+.red{color:#d42;}
+.hidden{display:none !important;}
 body,#main{padding:0;margin:0;}
 #wrap{padding:0 10px;}
 #logout{float:right;padding-right:10px;}
@@ -430,8 +432,9 @@ if (!$auth) {
 </div> <!-- End of main -->
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
-<input id="passcode" type="password" tabindex="1" autofocus onKeypress="if((window.event ? event.keyCode : (event.which ? event.which : false))=='13'){var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';}">
+<input id="passcode" type="password" tabindex="1" autofocus onfocus="document.getElementById('unlock-fail').classList.add('hidden');" onKeypress="if((window.event ? event.keyCode : (event.which ? event.which : false))=='13'){var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';}">
 <input type="submit" value="Unlock" tabindex="2" onClick="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
+<p id="unlock-fail" class="hidden red">Invalid pass code</p>
 </div>
 <div id="foot">
 <script>
@@ -478,6 +481,8 @@ function lockUnlock(p) {
       if (xhr.status == 200) {
         setLockCookie();
         window.location='index.php';
+      } else {
+        document.getElementById('unlock-fail').classList.remove('hidden');
       }
     }
   }
