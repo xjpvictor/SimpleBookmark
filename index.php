@@ -5,6 +5,10 @@ include(__DIR__ . '/init.php');
 if ($auth) {
   if (isset($_GET['action'])) {
     switch ($_GET['action']) {
+    case 'auth':
+      if (isset($_GET['code']) && $_GET['code'])
+        file_put_contents($tmp_dir.'/auth_'.$_GET['code'].'.tmp', 1, LOCK_EX);
+      break;
     case 'logout':
       setcookie($cookie_name, '', 1, '/', '', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 1 : 0), 1);
       session_destroy();
@@ -326,6 +330,7 @@ a.url-checker{color:#4caf50;font-size:1em;margin-right:8px;}
 }
 -->
 </style>
+<script src="lib/qrcode.js"></script>
 </head>
 <body>
 <div id="main" style="display:none;">
@@ -335,12 +340,37 @@ if (!$auth) {
   // Show login
   echo '<div id="wrap">
 <p>Please log in</p><br/>
-<form method="post" action="index.php?action=login">
+<form method="post" action="index.php?action=login" id="login-form">
 <input required name="p" type="password" autofocus>
-<input class="compose" type="submit" value="Log in" >
+<input class="compose" type="submit" value="Log in">
 <br/><br/><label><input name="r" type="checkbox" value="1"> Remember me</label>
+<input type="text" id="auth-code" class="hidden" name="c">
 </form>
-</div><br/>';
+<p>Or</p>
+<p>Scan to login</p>
+<div id="qrcode-auth"></div>';
+?>
+<script>
+function authqr() {
+  document.getElementById("auth-code").value = "<?php echo ($c = hash('sha256', get_randomstring(32, 1))); ?>";
+  var qr = document.getElementById("qrcode-auth");
+  qr.innerHTML = "";
+  new QRCode(qr,{text:"<?php echo $site_url; ?>?action=auth&code=<?php echo $c; ?>", width: 150, height: 150});
+  setTimeout("authqr()", <?php echo ((max(60, ($auth_code_expiry - 60))) * 1000); ?>);
+}
+authqr();
+if (typeof(EventSource) !== 'undefined') {
+  var eSource = new EventSource('index.php?action=qr&code=<?php echo $c; ?>', {withCredentials: true});
+  eSource.onmessage = function(event) {
+    if (event.data) {
+      if (event.data == 1)
+        document.getElementById('login-form').submit();
+    }
+  };
+}
+</script>
+<?php
+  echo '</div><br/>';
 } else {
   $cache = true;
   //$cache = 0;
@@ -430,12 +460,14 @@ if (!$auth) {
 <div id="rightbottom"><a href="javascript:;" onclick="window.scrollTo(0,0);return false;" id="totop" title="Go to top">&#x25B2</a><a href="javascript:;" onclick="window.scrollTo(0, document.body.scrollHeight);return false;" id="tobottom" title="Go to bottom">&#x25BC</a></div>
 <?php } ?>
 </div> <!-- End of main -->
+<?php if ($auth) { ?>
 <div id="lock" style="display:none;">
 <p>Enter Pass code:</p>
 <input id="passcode" type="password" tabindex="1" autofocus onfocus="document.getElementById('unlock-fail').classList.add('hidden');" onKeypress="if((window.event ? event.keyCode : (event.which ? event.which : false))=='13'){var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';}">
 <input type="submit" value="Unlock" tabindex="2" onClick="var elem=document.getElementById('passcode');lockUnlock(elem.value);elem.value='';">
 <p id="unlock-fail" class="hidden red">Invalid pass code</p>
 </div>
+<?php } ?>
 <div id="foot">
 <script>
 function getCookie(name) {
@@ -444,6 +476,7 @@ function getCookie(name) {
   if (parts.length == 2) return parts.pop().split(";").shift();
   else return '';
 }
+<?php if ($auth) { ?>
 function setLockCookie() {
   n = Date.now();
   d = new Date();
@@ -498,6 +531,7 @@ if (<?php echo (isset($cache) && $cache ? '##LOCKDOWN##' : (isset($passcode) && 
     }, 1000);
   }
 }
+<?php } ?>
 document.getElementById('main').style.display='block';
 
 function notRobot() {
@@ -512,6 +546,7 @@ window.addEventListener("mousemove", notRobot);
 window.addEventListener("mousedown", notRobot);
 window.addEventListener("keydown", notRobot);
 
+<?php if ($auth) { ?>
 function toggleShow(id) {
   var bb = document.getElementById(id);
   if (bb.style.display == "block") {
@@ -810,6 +845,7 @@ if (typeof elemSearch != 'undefined' && elemSearch !== null && typeof window.ses
   window.sessionStorage['search'] = '';
   searchStrFunction();
 }
+<?php } ?>
 </script>
 <?php
 if (file_exists($f = $data_dir . '/foot.php'))
@@ -838,7 +874,7 @@ if ($auth) {
 </div>
 <img src='parsemail.php' alt='Parse mail' style="position:fixed;left:-3px;top:-50px;width:0;height:0;border:none;"/>
 
-<?php if ($check_url) : ?>
+<?php if ($auth && $check_url) : ?>
 <script>
 function addURLChecker(c) {
   var urlchecker = document.getElementById("urlchecker");
@@ -861,7 +897,6 @@ document.addEventListener('gesturestart', function (e) {
 });
 </script>
 <div id="qrcode" onclick="this.innerHTML='';"></div>
-<script src="lib/qrcode.js"></script>
 <!-- Cache generated at <?php echo date("r"); ?> -->
 </body>
 </html>

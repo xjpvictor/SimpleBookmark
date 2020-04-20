@@ -1,4 +1,12 @@
 <?php
+function get_randomstring($length = 32, $allow_symbol = false) {
+  $characters = '0123456789abcdefghijklmnopqrstuvwxyz'.($allow_symbol ? '!@#$%^&*()-_=+|?~,.<>\'";:{}[]' : '');
+  $randomString = '';
+  for ($i = 0; $i < $length; $i++) {
+    $randomString .= $characters[rand(0, strlen($characters) - 1)];
+  }
+  return $randomString;
+}
 function addhttp($url, $check_js = 1) {
   if (!($js = preg_match("/^javascript:.*$/i", $url)) && !preg_match("~^(?:f|ht)tps?://~i", $url)) {
     $url = "http://" . $url;
